@@ -1,44 +1,21 @@
 import OpenAI from 'openai'
 import { getRelevantKnowledge, formatKnowledgeForPrompt } from './knowledge-base'
 
-// 获取 AI 提供商配置
-const AI_PROVIDER = process.env.AI_PROVIDER || 'kimi'
-
-// 配置不同的 AI 提供商
-const aiConfig = {
-  kimi: {
-    apiKey: process.env.KIMI_API_KEY,
-    baseURL: 'https://api.moonshot.cn/v1',
-    model: 'moonshot-v1-8k',
-    name: 'KIMI',
-  },
-  deepseek: {
-    apiKey: process.env.DEEPSEEK_API_KEY,
-    baseURL: 'https://api.deepseek.com/v1',  // 修复：添加 /v1
-    model: 'deepseek-chat',
-    name: 'DeepSeek',
-  },
+// 检查 DeepSeek API Key
+if (!process.env.DEEPSEEK_API_KEY) {
+  console.error('❌ DEEPSEEK_API_KEY is not set in environment variables')
+  throw new Error('请在环境变量中配置 DEEPSEEK_API_KEY')
 }
 
-const currentConfig = aiConfig[AI_PROVIDER as keyof typeof aiConfig]
-
-if (!currentConfig) {
-  throw new Error(`❌ 不支持的 AI_PROVIDER: ${AI_PROVIDER}，请使用 'kimi' 或 'deepseek'`)
-}
-
-if (!currentConfig.apiKey) {
-  console.warn(`⚠️ ${currentConfig.name} API Key is not set in environment variables`)
-}
-
-// 初始化 OpenAI 客户端
+// 初始化 DeepSeek 客户端
 const client = new OpenAI({
-  apiKey: currentConfig.apiKey || '',
-  baseURL: currentConfig.baseURL,
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: 'https://api.deepseek.com/v1',
   timeout: 30000, // 30秒超时
   maxRetries: 0, // 关闭自动重试，我们手动控制
 })
 
-console.log(`✅ 使用 AI 提供商: ${currentConfig.name} (${AI_PROVIDER})`)
+console.log('✅ 使用 AI 提供商: DeepSeek')
 
 /**
  * 延迟函数（用于重试等待）
@@ -51,19 +28,13 @@ export async function chat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   model?: string
 ): Promise<string> {
-  // 检查 API Key 是否配置
-  if (!currentConfig.apiKey) {
-    const apiKeyName = AI_PROVIDER === 'kimi' ? 'KIMI_API_KEY' : 'DEEPSEEK_API_KEY'
-    throw new Error(`API Key 未配置，请在环境变量中设置 ${apiKeyName}`)
-  }
-
   const maxRetries = 3
   let lastError: any
-  const modelToUse = model || currentConfig.model
+  const modelToUse = model || 'deepseek-chat'
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`🤖 Calling ${currentConfig.name} API (attempt ${attempt}/${maxRetries}) with model:`, modelToUse)
+      console.log(`🤖 Calling DeepSeek API (attempt ${attempt}/${maxRetries}) with model:`, modelToUse)
 
       const res = await client.chat.completions.create({
         model: modelToUse,
@@ -71,12 +42,12 @@ export async function chat(
         temperature: 0.7
       })
 
-      console.log(`✅ ${currentConfig.name} API response received`)
+      console.log(`✅ DeepSeek API response received`)
       return res.choices[0]?.message?.content || ''
 
     } catch (error: any) {
       lastError = error
-      console.error(`❌ ${currentConfig.name} API error (attempt ${attempt}/${maxRetries}):`, error)
+      console.error(`❌ DeepSeek API error (attempt ${attempt}/${maxRetries}):`, error)
 
       // 检查是否是 429 错误（速率限制）
       const is429 = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('overload')
@@ -102,7 +73,7 @@ export async function chat(
 
   // 所有重试都失败了
   if (lastError?.status === 429 || lastError?.message?.includes('overload')) {
-    throw new Error(`${currentConfig.name} API 服务器负载过高，请稍后再试（1-2分钟后）`)
+    throw new Error('DeepSeek API 服务器负载过高，请稍后再试（1-2分钟后）')
   }
 
   throw lastError
@@ -112,7 +83,7 @@ export async function chatStream(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   model?: string
 ) {
-  const modelToUse = model || currentConfig.model
+  const modelToUse = model || 'deepseek-chat'
   return client.chat.completions.create({
     model: modelToUse,
     messages,

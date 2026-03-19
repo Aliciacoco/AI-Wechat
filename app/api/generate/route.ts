@@ -16,19 +16,6 @@ export async function POST(request: NextRequest) {
 
     console.log('📋 Request params:', { topic, type, accountId, accountName })
 
-    // 检查环境变量
-    const aiProvider = process.env.AI_PROVIDER || 'kimi'
-    const apiKeyName = aiProvider === 'deepseek' ? 'DEEPSEEK_API_KEY' : 'KIMI_API_KEY'
-    const apiKey = aiProvider === 'deepseek' ? process.env.DEEPSEEK_API_KEY : process.env.KIMI_API_KEY
-
-    if (!apiKey) {
-      console.error(`❌ ${apiKeyName} not configured`)
-      return NextResponse.json({
-        success: false,
-        error: `API Key 未配置，请在环境变量中设置 ${apiKeyName}`
-      }, { status: 500 })
-    }
-
     if (type === 'recommendation') {
       // 生成推荐主题
       if (!accountId || !accountName) {
@@ -86,12 +73,12 @@ export async function POST(request: NextRequest) {
       // 特殊错误处理
       if (error.message.includes('timeout')) {
         errorMessage = 'API 请求超时，请稍后重试'
-      } else if (error.message.includes('API key')) {
-        errorMessage = 'API Key 配置错误，请检查环境变量'
+      } else if (error.message.includes('DEEPSEEK_API_KEY')) {
+        errorMessage = 'DeepSeek API Key 未配置，请检查环境变量'
       } else if (error.message.includes('rate limit') || error.message.includes('429')) {
         errorMessage = 'API 调用频率超限，请等待 1-2 分钟后重试'
       } else if (error.message.includes('overload') || error.message.includes('服务器负载过高')) {
-        errorMessage = 'KIMI 服务器负载过高，请稍后（1-2分钟）再试'
+        errorMessage = 'DeepSeek 服务器负载过高，请稍后（1-2分钟）再试'
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = '网络连接失败，请检查网络或稍后重试'
       }
