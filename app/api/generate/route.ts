@@ -84,8 +84,10 @@ export async function POST(request: NextRequest) {
         errorMessage = 'API 请求超时，请稍后重试'
       } else if (error.message.includes('API key')) {
         errorMessage = 'API Key 配置错误，请检查环境变量'
-      } else if (error.message.includes('rate limit')) {
-        errorMessage = 'API 调用频率超限，请稍后重试'
+      } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorMessage = 'API 调用频率超限，请等待 1-2 分钟后重试'
+      } else if (error.message.includes('overload') || error.message.includes('服务器负载过高')) {
+        errorMessage = 'KIMI 服务器负载过高，请稍后（1-2分钟）再试'
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage = '网络连接失败，请检查网络或稍后重试'
       }

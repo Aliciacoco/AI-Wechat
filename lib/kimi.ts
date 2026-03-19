@@ -10,26 +10,68 @@ const kimi = new OpenAI({
   apiKey: process.env.KIMI_API_KEY || '',
   baseURL: 'https://api.moonshot.cn/v1',
   timeout: 30000, // 30秒超时
-  maxRetries: 2, // 重试2次
+  maxRetries: 0, // 关闭自动重试，我们手动控制
 })
+
+/**
+ * 延迟函数（用于重试等待）
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 export async function chat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   model: 'moonshot-v1-8k' | 'moonshot-v1-32k' = 'moonshot-v1-8k'
 ): Promise<string> {
-  try {
-    console.log('🤖 Calling KIMI API with model:', model)
-    const res = await kimi.chat.completions.create({
-      model,
-      messages,
-      temperature: 0.7
-    })
-    console.log('✅ KIMI API response received')
-    return res.choices[0]?.message?.content || ''
-  } catch (error) {
-    console.error('❌ KIMI API error:', error)
-    throw error
+  const maxRetries = 3
+  let lastError: any
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🤖 Calling KIMI API (attempt ${attempt}/${maxRetries}) with model:`, model)
+
+      const res = await kimi.chat.completions.create({
+        model,
+        messages,
+        temperature: 0.7
+      })
+
+      console.log('✅ KIMI API response received')
+      return res.choices[0]?.message?.content || ''
+
+    } catch (error: any) {
+      lastError = error
+      console.error(`❌ KIMI API error (attempt ${attempt}/${maxRetries}):`, error)
+
+      // 检查是否是 429 错误（速率限制）
+      const is429 = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('overload')
+
+      if (is429 && attempt < maxRetries) {
+        // 指数退避：第1次等2秒，第2次等4秒，第3次等8秒
+        const waitTime = Math.pow(2, attempt) * 1000
+        console.log(`⏳ Rate limit hit, waiting ${waitTime/1000}s before retry...`)
+        await delay(waitTime)
+        continue
+      }
+
+      // 其他错误或已达到最大重试次数，直接抛出
+      if (attempt === maxRetries) {
+        break
+      }
+
+      // 非 429 错误，等待1秒后重试
+      console.log('⏳ Waiting 1s before retry...')
+      await delay(1000)
+    }
   }
+
+  // 所有重试都失败了
+  if (lastError?.status === 429 || lastError?.message?.includes('overload')) {
+    throw new Error('KIMI API 服务器负载过高，请稍后再试（1-2分钟后）')
+  }
+
+  throw lastError
 }
 
 export async function chatStream(
