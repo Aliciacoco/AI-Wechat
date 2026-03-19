@@ -51,6 +51,12 @@ export async function chat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   model?: string
 ): Promise<string> {
+  // 检查 API Key 是否配置
+  if (!currentConfig.apiKey) {
+    const apiKeyName = AI_PROVIDER === 'kimi' ? 'KIMI_API_KEY' : 'DEEPSEEK_API_KEY'
+    throw new Error(`API Key 未配置，请在环境变量中设置 ${apiKeyName}`)
+  }
+
   const maxRetries = 3
   let lastError: any
   const modelToUse = model || currentConfig.model
