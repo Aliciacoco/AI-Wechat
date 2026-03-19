@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const topTitles = getTopTitles(articles, 15)
 
   const prompt = buildTitlesPrompt(account, topic, topTitles)
-  const raw = await chat([{ role: 'user', content: prompt }], 'moonshot-v1-8k')
+  const raw = await chat([{ role: 'user', content: prompt }]) // 使用默认模型（根据 AI_PROVIDER 自动选择）
 
   try {
     const match = raw.match(/\[[\s\S]*\]/)

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const today = new Date().toISOString().split('T')[0]
 
   const prompt = buildRecommendPrompt(account, keyword, topTitles, today)
-  const raw = await chat([{ role: 'user', content: prompt }], 'moonshot-v1-32k')
+  const raw = await chat([{ role: 'user', content: prompt }]) // 使用默认模型（根据 AI_PROVIDER 自动选择）
 
   try {
     const match = raw.match(/\[[\s\S]*\]/)

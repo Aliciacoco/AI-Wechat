@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const compSchool = getSchoolName(compId)
 
   const prompt = buildScorePrompt(account, idea, topTitles, today, selfBenchmarks, compBenchmarks, compSchool)
-  const raw = await chat([{ role: 'user', content: prompt }], 'moonshot-v1-32k')
+  const raw = await chat([{ role: 'user', content: prompt }]) // 使用默认模型（根据 AI_PROVIDER 自动选择）
 
   try {
     const match = raw.match(/\{[\s\S]*\}/)
