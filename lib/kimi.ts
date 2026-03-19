@@ -39,34 +39,22 @@ export async function chatStream(
 }
 
 /**
- * 生成标题推荐
+ * 生成标题推荐（优化版 - 减少生成数量提升速度）
  */
 export async function generateTitles(topic: string, accountType: string = '主号'): Promise<any[]> {
-  const systemPrompt = `你是一个专业的高校新媒体运营专家，擅长为南京师范大学官方公众号撰写吸引人的标题。
+  const systemPrompt = `你是南师大新媒体编辑。生成 4 个标题，JSON格式，无其他文字。
 
-要求：
-1. 生成 6 个不同风格的标题
-2. 每个标题要有明确的风格标签（情感流/视觉流/文化流/互动流/记录流/紧迫流）
-3. 标题要结合南师大特色（随园、师大文化等）
-4. 每个标题附带简短描述和目标受众
-5. 必须返回严格的 JSON 格式数组，不要有任何其他文字
+格式：
+[{"title":"标题","style":"类型","description":"简述","audience":"受众"}]
 
-格式示例：
-[
-  {
-    "title": "标题内容",
-    "style": "情感流",
-    "description": "简短描述",
-    "audience": "目标受众"
-  }
-]`
+类型：情感共鸣型/荣耀触发型/悬念好奇型/信息实用型`
 
-  const userPrompt = `请为以下主题生成 6 个标题：${topic}`
+  const userPrompt = `主题：${topic}`
 
   const response = await chat([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ])
+  ], 'moonshot-v1-8k') // 使用更快的 8k 模型
 
   try {
     // 尝试从返回内容中提取 JSON

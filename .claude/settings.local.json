@@ -12,7 +12,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: 完整实现AI选题助手功能\n\n主要功能：\n- AI标题生成：支持4种类型标题（情感、荣耀、悬念、实用）\n- 三层智能推荐：本校历史回溯、名校对标案例、AI标题推荐\n- 实时推荐切换：点击\"换一条\"调用KIMI API生成个性化推荐\n- 权重算法：基于时间节点、学校动态、热点关联度智能推荐\n- 三维灵感来源：全网热点、节点日历、内容平衡分析\n- 首页本校账号智能推荐主题卡片\n- 关注高校过万阅读标签展示\n- 双重保障机制：API失败自动降级到本地选择\n\n技术栈：\n- Next.js 16.1.7 + React 19.2.3\n- TypeScript + Tailwind CSS\n- KIMI API (Moonshot AI)\n- Duolingo风格设计系统\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push -u origin master)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfix: 优化 Vercel 部署和 API 调用\n\n改进内容：\n- 添加 API 超时配置（30秒）和重试机制（2次）\n- 增加详细的错误日志和调试信息\n- API Key 未配置时提供明确错误提示\n- 添加 maxDuration 配置支持 Vercel Pro\n- 特殊错误识别和友好提示（超时、网络、配额等）\n- 创建 VERCEL_DEPLOYMENT.md 部署指南\n\n常见问题解决：\n1. 环境变量未配置 → 明确提示\n2. Vercel 免费版 10 秒超时 → 建议升级或换平台\n3. 网络连接问题 → 本地可用但 Vercel 不可用的排查\n4. API Key 配额问题 → 检查账户状态\n\n调试改进：\n- 添加 emoji 日志标记便于追踪\n- 请求耗时统计\n- 开发环境显示详细错误堆栈\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nperf: 优化 API 性能以适应 Vercel 免费版\n\n性能优化：\n- 简化提示词减少 token 使用\n- 从生成 6 个标题改为 4 个（减少生成时间）\n- 精简 system prompt 提升响应速度\n- 明确使用 moonshot-v1-8k 模型（更快）\n\n部署配置：\n- 添加 railway.json 支持 Railway 部署\n- Railway 无严格超时限制，适合 AI 应用\n\n预期效果：\n- 生成时间从 12-15 秒降至 6-8 秒\n- Vercel 免费版（10秒限制）可能可用\n- 如仍超时建议升级 Pro 或使用 Railway\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
