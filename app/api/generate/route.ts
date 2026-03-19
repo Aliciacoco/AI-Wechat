@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateTitles, searchHistoricalArticles, searchBenchmarkCases, generateRecommendation } from '@/lib/kimi'
+import { generateTitles, searchHistoricalArticles, searchBenchmarkCases, generateRecommendation } from '@/lib/ai'
 
 // 设置 API 路由的运行时配置
 export const runtime = 'nodejs'
@@ -17,11 +17,15 @@ export async function POST(request: NextRequest) {
     console.log('📋 Request params:', { topic, type, accountId, accountName })
 
     // 检查环境变量
-    if (!process.env.KIMI_API_KEY) {
-      console.error('❌ KIMI_API_KEY not configured')
+    const aiProvider = process.env.AI_PROVIDER || 'kimi'
+    const apiKeyName = aiProvider === 'deepseek' ? 'DEEPSEEK_API_KEY' : 'KIMI_API_KEY'
+    const apiKey = aiProvider === 'deepseek' ? process.env.DEEPSEEK_API_KEY : process.env.KIMI_API_KEY
+
+    if (!apiKey) {
+      console.error(`❌ ${apiKeyName} not configured`)
       return NextResponse.json({
         success: false,
-        error: 'API Key 未配置，请在 Vercel 环境变量中设置 KIMI_API_KEY'
+        error: `API Key 未配置，请在环境变量中设置 ${apiKeyName}`
       }, { status: 500 })
     }
 

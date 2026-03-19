@@ -1,17 +1,44 @@
 import OpenAI from 'openai'
 import { getRelevantKnowledge, formatKnowledgeForPrompt } from './knowledge-base'
 
-// 检查 API Key 是否存在
-if (!process.env.KIMI_API_KEY) {
-  console.warn('⚠️ KIMI_API_KEY is not set in environment variables')
+// 获取 AI 提供商配置
+const AI_PROVIDER = process.env.AI_PROVIDER || 'kimi'
+
+// 配置不同的 AI 提供商
+const aiConfig = {
+  kimi: {
+    apiKey: process.env.KIMI_API_KEY,
+    baseURL: 'https://api.moonshot.cn/v1',
+    model: 'moonshot-v1-8k',
+    name: 'KIMI',
+  },
+  deepseek: {
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    baseURL: 'https://api.deepseek.com',
+    model: 'deepseek-chat',
+    name: 'DeepSeek',
+  },
 }
 
-const kimi = new OpenAI({
-  apiKey: process.env.KIMI_API_KEY || '',
-  baseURL: 'https://api.moonshot.cn/v1',
+const currentConfig = aiConfig[AI_PROVIDER as keyof typeof aiConfig]
+
+if (!currentConfig) {
+  throw new Error(`❌ 不支持的 AI_PROVIDER: ${AI_PROVIDER}，请使用 'kimi' 或 'deepseek'`)
+}
+
+if (!currentConfig.apiKey) {
+  console.warn(`⚠️ ${currentConfig.name} API Key is not set in environment variables`)
+}
+
+// 初始化 OpenAI 客户端
+const client = new OpenAI({
+  apiKey: currentConfig.apiKey || '',
+  baseURL: currentConfig.baseURL,
   timeout: 30000, // 30秒超时
   maxRetries: 0, // 关闭自动重试，我们手动控制
 })
+
+console.log(`✅ 使用 AI 提供商: ${currentConfig.name} (${AI_PROVIDER})`)
 
 /**
  * 延迟函数（用于重试等待）
@@ -22,27 +49,28 @@ function delay(ms: number): Promise<void> {
 
 export async function chat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  model: 'moonshot-v1-8k' | 'moonshot-v1-32k' = 'moonshot-v1-8k'
+  model?: string
 ): Promise<string> {
   const maxRetries = 3
   let lastError: any
+  const modelToUse = model || currentConfig.model
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`🤖 Calling KIMI API (attempt ${attempt}/${maxRetries}) with model:`, model)
+      console.log(`🤖 Calling ${currentConfig.name} API (attempt ${attempt}/${maxRetries}) with model:`, modelToUse)
 
-      const res = await kimi.chat.completions.create({
-        model,
+      const res = await client.chat.completions.create({
+        model: modelToUse,
         messages,
         temperature: 0.7
       })
 
-      console.log('✅ KIMI API response received')
+      console.log(`✅ ${currentConfig.name} API response received`)
       return res.choices[0]?.message?.content || ''
 
     } catch (error: any) {
       lastError = error
-      console.error(`❌ KIMI API error (attempt ${attempt}/${maxRetries}):`, error)
+      console.error(`❌ ${currentConfig.name} API error (attempt ${attempt}/${maxRetries}):`, error)
 
       // 检查是否是 429 错误（速率限制）
       const is429 = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('overload')
@@ -68,7 +96,7 @@ export async function chat(
 
   // 所有重试都失败了
   if (lastError?.status === 429 || lastError?.message?.includes('overload')) {
-    throw new Error('KIMI API 服务器负载过高，请稍后再试（1-2分钟后）')
+    throw new Error(`${currentConfig.name} API 服务器负载过高，请稍后再试（1-2分钟后）`)
   }
 
   throw lastError
@@ -76,9 +104,15 @@ export async function chat(
 
 export async function chatStream(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  model: 'moonshot-v1-8k' | 'moonshot-v1-32k' = 'moonshot-v1-8k'
+  model?: string
 ) {
-  return kimi.chat.completions.create({ model, messages, temperature: 0.7, stream: true })
+  const modelToUse = model || currentConfig.model
+  return client.chat.completions.create({
+    model: modelToUse,
+    messages,
+    temperature: 0.7,
+    stream: true
+  })
 }
 
 /**
@@ -108,7 +142,7 @@ ${knowledgePrompt}
   const response = await chat([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], 'moonshot-v1-8k') // 使用更快的 8k 模型
+  ]) // 使用默认模型
 
   try {
     // 尝试从返回内容中提取 JSON
@@ -117,12 +151,12 @@ ${knowledgePrompt}
       const titles = JSON.parse(jsonMatch[0])
       // 添加唯一 ID
       return titles.map((title: any, index: number) => ({
-        id: `kimi-${Date.now()}-${index}`,
+        id: `ai-${Date.now()}-${index}`,
         ...title,
       }))
     }
   } catch (e) {
-    console.error('Failed to parse KIMI response:', e)
+    console.error('Failed to parse AI response:', e)
   }
 
   throw new Error('Failed to parse titles from KIMI response')
@@ -271,7 +305,5 @@ ${knowledgePrompt}
     console.error('Failed to parse recommendation:', e)
   }
 
-  throw new Error('Failed to parse recommendation from KIMI response')
+  throw new Error('Failed to parse recommendation from AI response')
 }
-
-export default kimi

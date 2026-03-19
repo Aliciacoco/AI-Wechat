@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loadAccount, loadArticles, getTopTitles, findSimilarArticles, getCompetitorId, getSchoolName } from '@/lib/dataAnalysis'
 import { buildScorePrompt } from '@/lib/prompts'
-import { chat } from '@/lib/kimi'
+import { chat } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   const { accountId, idea } = await req.json()

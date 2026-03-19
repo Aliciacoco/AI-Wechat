@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loadAccount, loadArticles, getTopTitles } from '@/lib/dataAnalysis'
 import { buildRecommendPrompt } from '@/lib/prompts'
-import { chat } from '@/lib/kimi'
+import { chat } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   const { accountId, keyword } = await req.json()
