@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if [ ! -d \"lib\" ])",
+      "Bash(then mkdir lib)",
+      "Bash(fi)",
+      "WebSearch",
+      "WebFetch(domain:www.njnu.edu.cn)",
+      "Bash(npm run dev)",
+      "Bash(git remote add origin https://github.com/Aliciacoco/AI-Wechat.git)",
+      "Bash(git add .)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

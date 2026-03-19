@@ -1,0 +1,35 @@
+{
+  "id": "ecnu-main",
+  "school": "华东师范大学",
+  "name": "华东师范大学",
+  "shortName": "华东师大主号",
+  "type": "main",
+  "role": "competitor",
+  "relevance": "同为师范大学，同级竞争，选题策略参考价值高",
+  "positioning": {
+    "oneLiner": "华东师大的对外形象窗口，兼顾情感共鸣与学术前沿展示",
+    "primaryAudience": ["在校学生", "校友", "教职工"],
+    "secondaryAudience": ["社会公众", "学术圈"],
+    "coreKPI": ["阅读量", "分享率"],
+    "contentMission": "展示华东师大的学术高度与人文温度"
+  },
+  "contentDNA": {
+    "toneKeywords": ["活泼", "前沿", "上海气息", "科技感"],
+    "signatureContent": ["热点蹭流量（DeepSeek/AI话题）", "跨界联名", "互动福利", "顶刊成果"]
+  },
+  "historicalInsights": {
+    "avgReadCount": 13000,
+    "topContentTypes": ["荣耀展示", "热点蹭流量", "情感节点", "互动福利"],
+    "allTimeHigh": {
+      "title": "华东师大已接入DeepSeek！满血版！",
+      "readCount": 80000,
+      "date": "2025-02-17",
+      "category": "热点蹭流量"
+    }
+  },
+  "insights": {
+    "strengths": ["热点嫁接能力强（DeepSeek、哪吒等）", "跨界联名多（♡上海交大）", "AI话题布局早"],
+    "vsNjnu": "华东师大更强调上海城市资源和科技感；南师大更强调人文诗意和随园气质",
+    "learnable": ["热点蹭流量的姿势", "联名借势内容形式", "节气+互动的结合"]
+  }
+}

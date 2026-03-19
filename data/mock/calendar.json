@@ -1,0 +1,213 @@
+{
+  "main": [
+    {
+      "id": "cal001",
+      "name": "五四青年节",
+      "date": "2026-05-04",
+      "type": "national",
+      "category": "节日节点",
+      "suggestedAngles": [
+        "南师大青年说：我们这一代的答卷是什么",
+        "从随园走出的青年，他们在哪里"
+      ],
+      "historicalRef": {
+        "title": "祝贺！南师教师惠若琪获新时代青年先锋奖",
+        "readCount": 17000,
+        "date": "2025-05-04"
+      }
+    },
+    {
+      "id": "cal002",
+      "name": "毕业季",
+      "date": "2026-06-20",
+      "type": "campus",
+      "category": "校园节点",
+      "suggestedAngles": [
+        "再见，随园——写给每一个离开的南师人",
+        "毕业心语丨那些美好和遗憾",
+        "南师2026届毕业生，他们去哪了"
+      ],
+      "historicalRef": {
+        "title": "毕业心语丨那些美好和遗憾",
+        "readCount": 13000,
+        "date": "2025-06-16"
+      }
+    },
+    {
+      "id": "cal003",
+      "name": "开学季",
+      "date": "2026-09-01",
+      "type": "campus",
+      "category": "校园节点",
+      "suggestedAngles": [
+        "欢迎你，南师新同学！",
+        "2026级本科新生大数据揭秘",
+        "新学期南师专属计划表，送你"
+      ],
+      "historicalRef": {
+        "title": "欢迎你，南师新同学！",
+        "readCount": 28000,
+        "date": "2025-09-06"
+      }
+    },
+    {
+      "id": "cal004",
+      "name": "校庆日",
+      "date": "2026-05-15",
+      "type": "campus",
+      "category": "校园节点",
+      "suggestedAngles": [
+        "南师大百廿年，这些故事你知道吗",
+        "随园的每一块砖，都有一个故事"
+      ],
+      "historicalRef": null
+    },
+    {
+      "id": "cal005",
+      "name": "教师节",
+      "date": "2026-09-10",
+      "type": "national",
+      "category": "节日节点",
+      "suggestedAngles": [
+        "致敬！南师大这些大先生",
+        "南师学子写给老师的话"
+      ],
+      "historicalRef": {
+        "title": "致敬大先生！南师大校史上教育家著作展举行",
+        "readCount": 6290,
+        "date": "2025-09-09"
+      }
+    },
+    {
+      "id": "cal006",
+      "name": "元旦",
+      "date": "2027-01-01",
+      "type": "national",
+      "category": "节日节点",
+      "suggestedAngles": [
+        "南师2027月历上新，带你穿越四季之美",
+        "新年，送南师人一份专属好运"
+      ],
+      "historicalRef": {
+        "title": "上新！南师2026月历（文末有惊喜）",
+        "readCount": 22000,
+        "date": "2026-01-04"
+      }
+    },
+    {
+      "id": "cal007",
+      "name": "期末周",
+      "date": "2026-06-15",
+      "type": "campus",
+      "category": "校园节点",
+      "suggestedAngles": [
+        "期末周，南师学子在干什么",
+        "考前须知，请查收！",
+        "「稳」住，我们能赢！"
+      ],
+      "historicalRef": {
+        "title": "考前须知，请查收！",
+        "readCount": 16000,
+        "date": "2025-12-19"
+      }
+    },
+    {
+      "id": "cal008",
+      "name": "运动会",
+      "date": "2026-10-20",
+      "type": "campus",
+      "category": "校园节点",
+      "suggestedAngles": [
+        "南师运动会，开幕！",
+        "活力南师，向阳奔跑"
+      ],
+      "historicalRef": {
+        "title": "南师运动会，开幕！",
+        "readCount": 20000,
+        "date": "2025-10-24"
+      }
+    }
+  ],
+  "admissions": [
+    {
+      "id": "adm001",
+      "name": "高考倒计时100天",
+      "date": "2026-03-07",
+      "type": "admissions",
+      "category": "招生节点",
+      "suggestedAngles": [
+        "高考倒计时100天！南师大等你来",
+        "倒计时100天，小南狮为你加buff"
+      ],
+      "historicalRef": {
+        "title": "高考倒计时100天！以「百」为契，逐梦南师",
+        "readCount": 1214,
+        "date": "2026-02-27"
+      }
+    },
+    {
+      "id": "adm002",
+      "name": "综合评价报名",
+      "date": "2026-04-29",
+      "type": "admissions",
+      "category": "招生节点",
+      "suggestedAngles": [
+        "权威发布！南师大2026综合评价招生简章",
+        "只需三步！综合评价报名流程图解"
+      ],
+      "historicalRef": {
+        "title": "权威发布丨南京师范大学2025年综合评价招生简章",
+        "readCount": 47000,
+        "date": "2025-04-29"
+      }
+    },
+    {
+      "id": "adm003",
+      "name": "高考出分",
+      "date": "2026-06-25",
+      "type": "admissions",
+      "category": "招生节点",
+      "suggestedAngles": [
+        "出分了！南师这个专业，冲！",
+        "多少分可以上南师？最新报考指南"
+      ],
+      "historicalRef": {
+        "title": "出分了！南师这个新专业，冲！",
+        "readCount": 90000,
+        "date": "2025-06-26"
+      }
+    },
+    {
+      "id": "adm004",
+      "name": "录取通知书发出",
+      "date": "2026-07-24",
+      "type": "admissions",
+      "category": "招生节点",
+      "suggestedAngles": [
+        "@2026级NNUer，你的录取通知书正在派送中",
+        "载梦向金陵，启程赴南师"
+      ],
+      "historicalRef": {
+        "title": "@2025级NNUer，你的录取通知书正在派送中",
+        "readCount": 18000,
+        "date": "2025-07-24"
+      }
+    },
+    {
+      "id": "adm005",
+      "name": "新生报到",
+      "date": "2026-09-05",
+      "type": "admissions",
+      "category": "招生节点",
+      "suggestedAngles": [
+        "5000+萌新小南狮报到！2026级本科新生大数据",
+        "@2026级小南狮，开学干货来了"
+      ],
+      "historicalRef": {
+        "title": "5839位萌新小南狮报到！南京师范大学2025级本科新生大数据公开！",
+        "readCount": 14000,
+        "date": "2025-08-29"
+      }
+    }
+  ]
+}

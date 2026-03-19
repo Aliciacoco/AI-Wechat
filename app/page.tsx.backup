@@ -1,0 +1,304 @@
+'use client'
+
+import { useState } from 'react'
+import { Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import AccountSwitcher from '@/components/AccountSwitcher'
+import InsightCards from '@/components/InsightCards'
+import HotTopics from '@/components/HotTopics'
+import CalendarPanel from '@/components/CalendarPanel'
+import ScoreResult from '@/components/ScoreResult'
+import TitleCards from '@/components/TitleCards'
+import OutlineSidebar from '@/components/OutlineSidebar'
+import TabSwitch from '@/components/TabSwitch'
+import AIBrief from '@/components/AIBrief'
+import SchoolAvatarScroll from '@/components/SchoolAvatarScroll'
+import ArticleWaterfall, { type ArticleCard } from '@/components/ArticleWaterfall'
+
+const ACCOUNT_BANNERS: Record<string, { label: string; hint: string; color: string }> = {
+  'njnu-main': { label: '南京师范大学 · 官方主号', hint: '受众：在校生 + 校友 · KPI：阅读量 + 分享率', color: 'bg-green-600' },
+  'njnu-admissions': { label: '南师招生 · 招生专号', hint: '受众：高中生 + 家长 · KPI：招生咨询转化', color: 'bg-emerald-500' },
+  'ecnu-main': { label: '华东师范大学 · 竞品参考', hint: '查看竞品数据洞察和选题对比', color: 'bg-blue-600' },
+  'ecnu-admissions': { label: '华东师大本科招生 · 竞品参考', hint: '查看竞品招生号数据和内容策略', color: 'bg-blue-500' },
+}
+
+// 三维对标的 Tab 数据
+const BENCHMARK_TABS = [
+  { id: 'followed', label: '关注高校' },
+  { id: 'ourschool', label: '本校复盘' },
+  { id: 'benchmark', label: '标杆案例' },
+]
+
+// 关注高校数据
+const FOLLOWED_SCHOOLS = [
+  { id: 'ecnu', name: '华东师大', shortName: '华师', logo: '' },
+  { id: 'bnu', name: '北京师大', shortName: '北师', logo: '' },
+  { id: 'nanjing', name: '南京大学', shortName: '南大', logo: '' },
+  { id: 'suzhou', name: '苏州大学', shortName: '苏大', logo: '' },
+]
+
+// 本校矩阵号数据
+const OUR_SCHOOLS = [
+  { id: 'njnu-main', name: '南京师范大学', shortName: '南师', logo: '' },
+  { id: 'njnu-admissions', name: '南师招生', shortName: '招生', logo: '' },
+]
+
+// 模拟文章数据
+const MOCK_ARTICLES: Record<string, ArticleCard[]> = {
+  'followed-ecnu': [
+    {
+      id: '1',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '重磅！我校科研团队在《Nature》发表最新成果',
+      publishTime: '2小时前',
+      views: 28500,
+      likes: 1240,
+      url: '#',
+    },
+    {
+      id: '2',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '华师大的秋天，藏在每一片落叶里',
+      publishTime: '5小时前',
+      views: 15300,
+      likes: 892,
+      url: '#',
+    },
+    {
+      id: '3',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '2026届毕业生就业质量报告发布',
+      publishTime: '1天前',
+      views: 42100,
+      likes: 2150,
+      url: '#',
+    },
+  ],
+  'followed-bnu': [
+    {
+      id: '4',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '百廿京师，教育报国：我们要走的路',
+      publishTime: '3小时前',
+      views: 35200,
+      likes: 1680,
+      url: '#',
+    },
+  ],
+  'ourschool-njnu-main': [
+    {
+      id: '5',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '随园的银杏叶落了，秋天的诗写满了校园',
+      publishTime: '4小时前',
+      views: 12800,
+      likes: 756,
+      url: '#',
+    },
+  ],
+  'benchmark-all': [
+    {
+      id: '6',
+      cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
+      title: '10w+爆款：这所高校用一张图讲清了整个校史',
+      publishTime: '6小时前',
+      views: 125000,
+      likes: 8900,
+      url: '#',
+    },
+  ],
+}
+
+// AI 简报内容
+const AI_BRIEFS = {
+  followed: '今日关注高校共发文 12 篇，热词 TOP3：科研成果、校园秋景、就业质量。华东师大《Nature》论文获高关注，值得学习其科研宣传策略。',
+  ourschool: '本周南师大主号发文 5 篇，平均阅读量 1.2w，较上周上升 15%。建议增加情感类内容比例，提升分享率。',
+  benchmark: '全网爆款分析：视觉流（图片叙事）占 45%，情感流（校园情怀）占 35%，干货流（实用信息）占 20%。建议多尝试视觉流策略。',
+}
+
+type Step = 'idle' | 'scoring' | 'scored' | 'generating' | 'done'
+
+export default function Home() {
+  const [accountId, setAccountId] = useState('njnu-main')
+  const [topicIdea, setTopicIdea] = useState('')
+  const [step, setStep] = useState<Step>('idle')
+  const [scoreData, setScoreData] = useState<Record<string, unknown> | null>(null)
+  const [titles, setTitles] = useState<unknown[]>([])
+  const [error, setError] = useState('')
+
+  const [showHot, setShowHot] = useState(true)
+  const [showCal, setShowCal] = useState(false)
+
+  // 三维对标状态
+  const [activeTab, setActiveTab] = useState<'followed' | 'ourschool' | 'benchmark'>('followed')
+  const [selectedSchool, setSelectedSchool] = useState<string | null>('ecnu')
+
+  const banner = ACCOUNT_BANNERS[accountId]
+  const showSidebar = step === 'scored' || step === 'generating' || step === 'done'
+
+  // 获取当前显示的文章列表
+  const getCurrentArticles = (): ArticleCard[] => {
+    if (activeTab === 'followed') {
+      return MOCK_ARTICLES[`followed-${selectedSchool}`] || []
+    } else if (activeTab === 'ourschool') {
+      return MOCK_ARTICLES[`ourschool-${selectedSchool}`] || []
+    } else {
+      return MOCK_ARTICLES['benchmark-all'] || []
+    }
+  }
+
+  const handleAccountChange = (id: string) => {
+    setAccountId(id)
+    setStep('idle')
+    setScoreData(null)
+    setTitles([])
+    setError('')
+  }
+
+  const handleScore = async () => {
+    if (!topicIdea.trim()) return
+    setStep('scoring')
+    setError('')
+    setScoreData(null)
+    setTitles([])
+    try {
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId, idea: topicIdea })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setScoreData(data)
+      setStep('scored')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '请求失败，请重试')
+      setStep('idle')
+    }
+  }
+
+  const handleGenerateTitles = async () => {
+    setStep('generating')
+    try {
+      const res = await fetch('/api/titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId, topic: topicIdea })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setTitles(Array.isArray(data) ? data : [])
+      setStep('done')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '请求失败，请重试')
+      setStep('scored')
+    }
+  }
+
+  const handleSelectTopic = (idea: string) => {
+    setTopicIdea(idea)
+    setStep('idle')
+    setScoreData(null)
+    setTitles([])
+    setTimeout(() => {
+      document.getElementById('workspace')?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
+
+  return (
+    <div className="min-h-screen">
+      {/* 顶部页面标题栏 */}
+      <header className="bg-white border-b sticky top-0 z-30" style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-md)' }}>
+        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center">
+          <h1 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
+            🏠 首页
+          </h1>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className={`flex gap-6 items-start ${showSidebar ? '' : 'justify-center'}`}>
+
+          {/* 主内容区 */}
+          <main className={`space-y-6 min-w-0 flex-1`}>
+
+            {/* 三维对标体系 */}
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--foreground-tertiary)' }}>
+                情报对标与数据复盘
+              </h2>
+
+              <div className="bg-white rounded-lg border p-6" style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                {/* Tab 切换 */}
+                <TabSwitch
+                  tabs={BENCHMARK_TABS}
+                  activeTab={activeTab}
+                  onChange={(id) => {
+                    setActiveTab(id as typeof activeTab)
+                    // 切换 tab 时重置选中的学校
+                    if (id === 'followed') {
+                      setSelectedSchool('ecnu')
+                    } else if (id === 'ourschool') {
+                      setSelectedSchool('njnu-main')
+                    } else {
+                      setSelectedSchool(null)
+                    }
+                  }}
+                />
+
+                <div className="mt-6">
+                  {/* AI 简报 */}
+                  <AIBrief
+                    content={
+                      activeTab === 'followed'
+                        ? AI_BRIEFS.followed
+                        : activeTab === 'ourschool'
+                        ? AI_BRIEFS.ourschool
+                        : AI_BRIEFS.benchmark
+                    }
+                  />
+
+                  {/* 头像滚动条（关注高校和本校复盘维度显示） */}
+                  {activeTab === 'followed' && (
+                    <SchoolAvatarScroll
+                      schools={FOLLOWED_SCHOOLS}
+                      selectedId={selectedSchool}
+                      onSelect={setSelectedSchool}
+                    />
+                  )}
+                  {activeTab === 'ourschool' && (
+                    <SchoolAvatarScroll
+                      schools={OUR_SCHOOLS}
+                      selectedId={selectedSchool}
+                      onSelect={setSelectedSchool}
+                    />
+                  )}
+
+                  {/* 瀑布流卡片 */}
+                  <ArticleWaterfall articles={getCurrentArticles()} />
+                </div>
+              </div>
+            </section>
+
+            <div className="h-12" />
+          </main>
+
+          {/* 右侧侧边栏：大纲 + 意向图 + 标题预览 */}
+          {showSidebar && (
+            <aside className="w-64 flex-shrink-0 sticky top-20">
+              <div className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--foreground-tertiary)' }}>
+                文案预览
+              </div>
+              <OutlineSidebar
+                topic={topicIdea}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                titles={titles as any[]}
+                generating={step === 'generating'}
+              />
+            </aside>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}

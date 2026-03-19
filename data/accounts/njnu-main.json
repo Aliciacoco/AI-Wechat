@@ -1,0 +1,38 @@
+{
+  "id": "njnu-main",
+  "school": "南京师范大学",
+  "name": "南京师范大学",
+  "shortName": "南师大主号",
+  "type": "main",
+  "role": "own",
+  "positioning": {
+    "oneLiner": "南师大的情感基础设施，维系几万人对这所学校的感情连接",
+    "primaryAudience": ["在校学生", "校友", "教职工"],
+    "secondaryAudience": ["学生家长", "社会公众"],
+    "coreKPI": ["阅读量", "分享率", "关注增长"],
+    "contentMission": "让每一个南师人感到骄傲和被看见"
+  },
+  "contentDNA": {
+    "toneKeywords": ["温情", "诗意", "人文", "随园气质"],
+    "forbiddenStyle": ["硬广招生", "官话套话", "纯通知无故事"],
+    "mustHaveElements": ["南师大专属地标或文化符号", "真实人物或场景细节", "情绪触发点"],
+    "signatureContent": ["人物故事系列", "校园美学", "节点情感文", "周边福利（壁纸/月历/表情包）"]
+  },
+  "brandAssets": {
+    "landmarks": ["随园", "仙林湖", "敬文图书馆", "北大楼", "随园食堂", "银杏路"],
+    "culturalSymbols": ["南师绿", "学衡派", "厚生精神", "陶行知", "晓庄精神", "NNUer"],
+    "mascots": ["小南狮"],
+    "brandColors": ["南师绿 #2E7D32", "随园米白 #F5F0E8"]
+  },
+  "historicalInsights": {
+    "avgReadCount": 12000,
+    "topContentTypes": ["人物故事", "荣耀展示", "情感节点", "周边福利"],
+    "bestPublishTime": "工作日 20:00-21:30",
+    "allTimeHigh": {
+      "title": "在南师，许你一生浪漫",
+      "readCount": 47000,
+      "date": "2025-10-29",
+      "category": "情感共鸣"
+    }
+  }
+}

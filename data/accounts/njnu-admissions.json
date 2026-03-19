@@ -1,0 +1,45 @@
+{
+  "id": "njnu-admissions",
+  "school": "南京师范大学",
+  "name": "南师招生",
+  "shortName": "南师招生号",
+  "type": "admissions",
+  "role": "own",
+  "positioning": {
+    "oneLiner": "让更多好学生认识南师、选择南师",
+    "primaryAudience": ["高中生（准大学生）", "高中生家长"],
+    "secondaryAudience": ["高中老师", "教育从业者"],
+    "coreKPI": ["阅读量", "咨询转化", "高考季粉丝增长"],
+    "contentMission": "用真实故事和权威信息，让潜在生源建立对南师的向往和信任"
+  },
+  "contentDNA": {
+    "toneKeywords": ["真诚", "有温度", "专业可信", "有吸引力"],
+    "forbiddenStyle": ["空洞吹捧", "数据堆砌无故事", "过度官方生硬"],
+    "mustHaveElements": ["对潜在生源的直接价值", "南师大核心吸引力", "行动引导"],
+    "signatureContent": ["汇梦南师·母校行", "校友天团", "高考倒计时系列", "录取进程日报", "节气文（日常维护）"]
+  },
+  "contentCalendar": {
+    "peak": ["3月（高考倒计时100天）", "5-6月（高考季）", "7-8月（录取季）"],
+    "secondary": ["9月（新生入学）", "12月（保送/提前招生）"],
+    "low": ["10-11月（淡季，维持内容）"],
+    "peakStrategy": "高考季每日推送，以信息类为主，辅以情感暖文；录取季每日更新录取进程"
+  },
+  "brandAssets": {
+    "landmarks": ["随园", "仙林湖", "南师大"],
+    "culturalSymbols": ["小南狮", "NNUer", "厚生精神"],
+    "mascots": ["小南狮"],
+    "brandColors": ["南师绿 #2E7D32"]
+  },
+  "historicalInsights": {
+    "avgReadCount": 1800,
+    "topContentTypes": ["招生政策（信息刚需）", "母校行系列", "校友故事", "高考季情感文"],
+    "bestPublishTime": "高考季：每日固定时间；平时：无严格要求",
+    "allTimeHigh": {
+      "title": "权威发布丨南京师范大学2025年综合评价招生简章",
+      "readCount": 47000,
+      "date": "2025-04-29",
+      "category": "招生政策"
+    },
+    "note": "招生号爆款几乎全部来自信息刚需类（分数线/简章），内容运营驱动的爆款较少"
+  }
+}

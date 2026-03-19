@@ -1,0 +1,33 @@
+{
+  "id": "ecnu-admissions",
+  "school": "华东师范大学",
+  "name": "华东师大本科招生",
+  "shortName": "华东师大招生号",
+  "type": "admissions",
+  "role": "competitor",
+  "relevance": "同为师范大学招生号，策略对比参考",
+  "positioning": {
+    "oneLiner": "让优质生源选择华东师大",
+    "primaryAudience": ["高中生", "高中生家长"],
+    "coreKPI": ["咨询转化", "高考季阅读量"],
+    "contentMission": "权威信息 + 情感温度，双向驱动招生转化"
+  },
+  "contentDNA": {
+    "toneKeywords": ["专业", "温情", "上海气息"],
+    "signatureContent": ["昭闻师大（情感系列）", "师大情·母校行", "就读体验系列", "招生动态日报", "分省新生座谈会"]
+  },
+  "historicalInsights": {
+    "avgReadCount": 2000,
+    "topContentTypes": ["招生政策", "母校行系列", "就读体验", "录取进程"],
+    "allTimeHigh": {
+      "title": "关于开展2025–2026学年寒假"师大情•母校行"学生招生宣讲团活动的通知",
+      "readCount": 9738,
+      "date": "2025-11-21",
+      "category": "招生活动"
+    }
+  },
+  "insights": {
+    "vsNjnu": "华东师大招生号有「就读体验」专栏（按学院逐一介绍）和「分省新生座谈会」系列，南师大招生号可借鉴",
+    "learnable": ["就读体验按学院细分", "录取进程逐日更新"]
+  }
+}

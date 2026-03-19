@@ -1,0 +1,106 @@
+[
+  {
+    "id": "ht001",
+    "keyword": "高考倒计时",
+    "heat": 95,
+    "trend": "rising",
+    "source": "微博热搜",
+    "validUntil": "2026-06-08",
+    "angles": {
+      "njnu-main": "高考那年，随园给了我什么——南师学长学姐的亲历告白",
+      "njnu-admissions": "高考倒计时！南师大校长为你加油，随园等你来",
+      "ecnu-main": "高考倒计时，华东师大学子这样走过来的"
+    }
+  },
+  {
+    "id": "ht002",
+    "keyword": "DeepSeek / AI大模型",
+    "heat": 88,
+    "trend": "stable",
+    "source": "微信指数",
+    "validUntil": "2026-04-30",
+    "angles": {
+      "njnu-main": "当我问DeepSeek：在南师就读是怎样一种体验？（南师大版）",
+      "njnu-admissions": "AI替你报志愿？我们来看看它怎么选南师大",
+      "ecnu-main": "华东师大教授回答：AI时代，大学教育应该怎么变"
+    }
+  },
+  {
+    "id": "ht003",
+    "keyword": "就业压力/考研热",
+    "heat": 82,
+    "trend": "rising",
+    "source": "微博热搜",
+    "validUntil": "2026-06-30",
+    "angles": {
+      "njnu-main": "那些在南师选择了「慢」的人，后来怎样了",
+      "njnu-admissions": "南师大考研数据曝光！这些专业升学率超高",
+      "ecnu-main": "华东师大毕业一年，他们过得怎样"
+    }
+  },
+  {
+    "id": "ht004",
+    "keyword": "特种兵式旅游/打卡热",
+    "heat": 76,
+    "trend": "stable",
+    "source": "小红书",
+    "validUntil": "2026-05-01",
+    "angles": {
+      "njnu-main": "特种兵打卡南师大随园！这份路线图比攻略好用",
+      "njnu-admissions": "来南师打卡的，最后都留下来了",
+      "ecnu-main": "华东师大樱花季，来了就不想走"
+    }
+  },
+  {
+    "id": "ht005",
+    "keyword": "毕业季/告别",
+    "heat": 91,
+    "trend": "rising",
+    "source": "微信指数",
+    "validUntil": "2026-07-01",
+    "angles": {
+      "njnu-main": "再见，随园。那些年我们在南师大错过的和抓住的",
+      "njnu-admissions": "他们从南师大出发，去往世界各地——2026届毕业生去向",
+      "ecnu-main": "以青春赴山海！华东师大2026届毕业典礼"
+    }
+  },
+  {
+    "id": "ht006",
+    "keyword": "学科竞赛/挑战杯",
+    "heat": 73,
+    "trend": "stable",
+    "source": "教育圈",
+    "validUntil": "2026-05-31",
+    "angles": {
+      "njnu-main": "特等奖！南师大这届学生厉害了",
+      "njnu-admissions": "在南师大，你也可以成为「挑战者」",
+      "ecnu-main": "华东师大主场夺冠！285家高校角逐"
+    }
+  },
+  {
+    "id": "ht007",
+    "keyword": "春天/校园花季",
+    "heat": 85,
+    "trend": "rising",
+    "source": "小红书/微博",
+    "validUntil": "2026-04-20",
+    "angles": {
+      "njnu-main": "随园的玉兰开了，这是春天给南师人的专属礼物",
+      "njnu-admissions": "春天来南师打卡，顺便看看你未来的学校",
+      "ecnu-main": "不愧是当选40年的市花，华东师大早春限定"
+    }
+  },
+  {
+    "id": "ht008",
+    "keyword": "全球/国际化",
+    "heat": 68,
+    "trend": "stable",
+    "source": "教育圈",
+    "validUntil": "2026-12-31",
+    "angles": {
+      "njnu-main": "从随园出发，南师人走向了哪里",
+      "njnu-admissions": "南师大+昆士兰大学双学位，这个选择值了",
+      "ecnu-main": "华东师大，以中国经验回答世界议题"
+    }
+  }
+]
