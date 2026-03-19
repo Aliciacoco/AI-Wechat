@@ -1,16 +1,34 @@
 import OpenAI from 'openai'
 
+// 检查 API Key 是否存在
+if (!process.env.KIMI_API_KEY) {
+  console.warn('⚠️ KIMI_API_KEY is not set in environment variables')
+}
+
 const kimi = new OpenAI({
   apiKey: process.env.KIMI_API_KEY || '',
   baseURL: 'https://api.moonshot.cn/v1',
+  timeout: 30000, // 30秒超时
+  maxRetries: 2, // 重试2次
 })
 
 export async function chat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
   model: 'moonshot-v1-8k' | 'moonshot-v1-32k' = 'moonshot-v1-8k'
 ): Promise<string> {
-  const res = await kimi.chat.completions.create({ model, messages, temperature: 0.7 })
-  return res.choices[0]?.message?.content || ''
+  try {
+    console.log('🤖 Calling KIMI API with model:', model)
+    const res = await kimi.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.7
+    })
+    console.log('✅ KIMI API response received')
+    return res.choices[0]?.message?.content || ''
+  } catch (error) {
+    console.error('❌ KIMI API error:', error)
+    throw error
+  }
 }
 
 export async function chatStream(
