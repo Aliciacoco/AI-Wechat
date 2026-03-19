@@ -14,7 +14,7 @@ const aiConfig = {
   },
   deepseek: {
     apiKey: process.env.DEEPSEEK_API_KEY,
-    baseURL: 'https://api.deepseek.com',
+    baseURL: 'https://api.deepseek.com/v1',  // 修复：添加 /v1
     model: 'deepseek-chat',
     name: 'DeepSeek',
   },
