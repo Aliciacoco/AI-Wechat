@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { getRelevantKnowledge, formatKnowledgeForPrompt } from './knowledge-base'
+import { TOPIC_STRATEGY_PROMPT } from './prompts'
 
 // 检查 DeepSeek API Key
 if (!process.env.DEEPSEEK_API_KEY) {
@@ -96,37 +97,43 @@ export async function chatStream(
  * 生成标题推荐（优化版 - 减少生成数量提升速度）
  */
 export async function generateTitles(topic: string, accountType: string = '主号'): Promise<any[]> {
-  // 获取相关的校本知识库内容
-  const relevantKnowledge = getRelevantKnowledge(topic)
-  const knowledgePrompt = formatKnowledgeForPrompt(relevantKnowledge)
+  // 只有当 topic 包含校史/荣誉/就业/美景等关键词时才注入知识库
+  const KNOWLEDGE_KEYWORDS = ['校史', '荣誉', '排名', '就业', '招聘', '专业', '院系', '美景', '校园', '建校', '周年']
+  const needsKnowledge = KNOWLEDGE_KEYWORDS.some(kw => topic.includes(kw))
+  const knowledgePrompt = needsKnowledge ? formatKnowledgeForPrompt(getRelevantKnowledge(topic)) : ''
 
-  const systemPrompt = `你是南师大新媒体编辑。生成 4 个标题，JSON格式，无其他文字。
+  const systemPrompt = `${TOPIC_STRATEGY_PROMPT.role}
+
+你的任务是为【南京师范大学】公众号生成 4 个候选标题，JSON 格式，无其他文字。
+
+核心框架：${TOPIC_STRATEGY_PROMPT.framework.name}
+每个标题必须属于以下类型之一：情感共鸣型、荣耀触发型、悬念好奇型、信息实用型
 
 ${knowledgePrompt}
 
 格式：
-[{"title":"标题","style":"类型","description":"简述","audience":"受众"}]
+[{"title":"标题（不超过20字）","style":"类型","description":"一句话说明吸引力来源","audience":"目标读者"}]
 
-类型：情感共鸣型/荣耀触发型/悬念好奇型/信息实用型
+【重要规则】
+1. 用户给出的主题可能来自其他学校的文章标题，仅作为选题方法论和内容形式的参考
+2. 所有生成的标题必须站在南师大编辑的视角，写南师大自己的内容
+3. 标题中只能出现"南师大"、"南师"、"随园"等南师大专属词，绝对不能出现其他学校名称
+4. 标题要年轻化、真诚，拒绝官腔套话
+5. 如有知识库内容，可引用具体数据增强可信度`
 
-要求：
-1. 标题必须基于【校本资料库】的真实数据，引用具体荣誉、数据、特色
-2. 确保信息准确性，不要编造不存在的内容
-3. 可以引用具体排名、获奖、就业数据等`
+  const userPrompt = `参考来源（可能来自其他学校，仅学习其选题方式）：${topic}
 
-  const userPrompt = `主题：${topic}`
+请以南师大编辑的视角，生成4个南师大自己的标题。`
 
   const response = await chat([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ]) // 使用默认模型
+  ])
 
   try {
-    // 尝试从返回内容中提取 JSON
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
       const titles = JSON.parse(jsonMatch[0])
-      // 添加唯一 ID
       return titles.map((title: any, index: number) => ({
         id: `ai-${Date.now()}-${index}`,
         ...title,
@@ -136,7 +143,7 @@ ${knowledgePrompt}
     console.error('Failed to parse AI response:', e)
   }
 
-  throw new Error('Failed to parse titles from KIMI response')
+  throw new Error('Failed to parse titles from AI response')
 }
 
 /**
@@ -234,39 +241,62 @@ export async function searchBenchmarkCases(topic: string): Promise<any[]> {
 }
 
 /**
- * 生成推荐主题
+ * 根据大纲生成正文
  */
+export async function generateBody(title: string, outline: string): Promise<string> {
+  const systemPrompt = `你是南京师范大学的资深新媒体编辑，擅长撰写高校公众号图文内容。
+请根据用户提供的文章标题和大纲，生成一篇完整的正文。
+
+要求：
+1. 语言生动，有南师大特色，贴近学生读者
+2. 段落清晰，结构与大纲对应
+3. 总字数 600-900 字
+4. 使用口语化但不失专业的表达
+5. 结尾可加互动引导语（如：你怎么看？欢迎留言分享）`
+
+  const userPrompt = `标题：${title}
+
+大纲：
+${outline}
+
+请生成正文。`
+
+  return await chat([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ])
+}
 export async function generateRecommendation(accountId: string, accountName: string): Promise<any> {
-  // 加载校本知识库用于推荐参考
-  const relevantKnowledge = getRelevantKnowledge('推荐主题')
-  const knowledgePrompt = formatKnowledgeForPrompt(relevantKnowledge)
+  const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 
-  const systemPrompt = `你是南京师范大学新媒体运营专家，负责为「${accountName}」公众号推荐选题。
+  const categories = TOPIC_STRATEGY_PROMPT.categories
+    .map(c => `- ${c.name}：${c.direction}`)
+    .join('\n')
 
-${knowledgePrompt}
+  const systemPrompt = `${TOPIC_STRATEGY_PROMPT.role}
 
-你需要根据以下信息生成一个推荐主题：
-1. 当前时间节点（春季、招生季等）
-2. 学校近期动态和热点
-3. 用户关注点和互动偏好
-4. 内容平衡性（避免重复类型）
-5. 【重要】结合校本资料库的真实数据和特色
+${TOPIC_STRATEGY_PROMPT.context}
+
+今天是 ${today}。请根据当前时间节点，从以下选题矩阵中挑选最合适的一个方向，为「${accountName}」推荐一个具体选题：
+
+${categories}
+
+核心框架：${TOPIC_STRATEGY_PROMPT.framework.name}
+- ${TOPIC_STRATEGY_PROMPT.framework.dimensions.map(d => d.label + '：' + d.desc).join('\n- ')}
+
+要求：
+1. 推荐的选题要结合当前时间节点（月份、季节、近期热点）
+2. 选题不能总是历史、周年纪念，要多样化
+3. 优先选择对在校生有实际价值的内容
 
 返回严格的 JSON 格式，不要有任何其他文字：
 {
-  "theme": "主题标题（格式：分类｜具体主题）",
-  "description": "推荐理由（30字以内，可引用具体数据）",
+  "theme": "主题标题（格式：分类｜具体主题，不超过15字）",
+  "description": "推荐理由（30字以内）",
   "weight": 权重值（5-10之间的整数）
-}
-
-示例：
-{
-  "theme": "春招季｜南师学子就业力",
-  "description": "结合校历和就业数据，展现就业竞争力",
-  "weight": 10
 }`
 
-  const userPrompt = `为公众号「${accountName}」生成一个新的推荐主题`
+  const userPrompt = `今天是${today}，为「${accountName}」推荐一个今日选题方向`
 
   const response = await chat([
     { role: 'system', content: systemPrompt },

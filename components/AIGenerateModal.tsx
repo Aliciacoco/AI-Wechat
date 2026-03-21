@@ -287,17 +287,27 @@ export default function AIGenerateModal({ isOpen, onClose, topic }: AIGenerateMo
       <div className="space-y-6">
         {/* 第一层：AI 标题推荐 */}
         <div>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: 'var(--primary)' }}>
-              1
-            </span>
-            AI 标题推荐
-            {loadingTitles && (
-              <span className="text-xs font-normal" style={{ color: 'var(--foreground-tertiary)' }}>
-                生成中...
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: 'var(--primary)' }}>
+                1
               </span>
+              AI 标题推荐
+              {loadingTitles && (
+                <span className="text-xs font-normal" style={{ color: 'var(--foreground-tertiary)' }}>
+                  生成中...
+                </span>
+              )}
+            </h3>
+            {/* 三维策略说明 */}
+            {!loadingTitles && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FCE7F3', color: '#9D174D', fontSize: '11px' }}>❤️ 动心</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#D1FAE5', color: '#064E3B', fontSize: '11px' }}>📌 有用</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#78350F', fontSize: '11px' }}>🎯 一笑</span>
+              </div>
             )}
-          </h3>
+          </div>
           <AITitleSuggestions
             titles={titlesWithFavorites}
             onFavorite={handleFavorite}

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
 import TopNav from "@/components/TopNav";
+import { SceneProvider } from "@/components/SceneProvider";
+import SceneContent from "@/components/SceneContent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,22 +29,15 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ background: 'var(--background)' }}
+        style={{ background: '#F2F4F7' }}
       >
-        {/* 顶部导航栏 - 全屏宽度 */}
-        <TopNav />
-
-        <div className="flex min-h-screen pt-14">
-          {/* 侧边栏 - 在顶部导航下方 */}
-          <Sidebar />
-
-          {/* 主内容区域 */}
-          <main className="flex-1 ml-60" style={{ background: 'var(--background-secondary)' }}>
-            {children}
-          </main>
-        </div>
+        <SceneProvider>
+          <TopNav />
+          <div className="pt-14 min-h-screen">
+            <SceneContent />
+          </div>
+        </SceneProvider>
       </body>
     </html>
   );
 }
-

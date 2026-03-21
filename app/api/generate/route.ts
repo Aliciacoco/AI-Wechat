@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateTitles, searchHistoricalArticles, searchBenchmarkCases, generateRecommendation } from '@/lib/ai'
+import { generateTitles, searchHistoricalArticles, searchBenchmarkCases, generateRecommendation, generateBody } from '@/lib/ai'
 
 // 设置 API 路由的运行时配置
 export const runtime = 'nodejs'
@@ -48,6 +48,18 @@ export async function POST(request: NextRequest) {
       const duration = Date.now() - startTime
       console.log(`✅ Historical articles found in ${duration}ms`)
       return NextResponse.json({ success: true, data: articles })
+    }
+
+    if (type === 'body') {
+      const { outline } = body
+      if (!outline) {
+        return NextResponse.json({ success: false, error: '缺少大纲参数' }, { status: 400 })
+      }
+      console.log('✍️ Generating body for:', topic)
+      const content = await generateBody(topic, outline)
+      const duration = Date.now() - startTime
+      console.log(`✅ Body generated in ${duration}ms`)
+      return NextResponse.json({ success: true, content })
     }
 
     if (type === 'benchmark') {

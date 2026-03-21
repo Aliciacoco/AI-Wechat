@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { BarChart2, Clock, TrendingUp, Award } from 'lucide-react'
+import { Card } from '@/components/ui'
+import { tokens } from '@/lib/design-tokens'
 
 interface InsightData {
   totalArticles: number
@@ -28,94 +30,98 @@ export default function InsightCards({ accountId }: Props) {
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {[1, 2, 3].map(i => (
-        <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse h-44" />
+        <Card key={i} style={{ padding: '20px', height: '176px' }} className="animate-pulse">{' '}</Card>
       ))}
     </div>
   )
   if (!data) return null
 
   const topType = data.topByType[0]
+  const RANK_COLOR = ['#F59E0B', tokens.color.text.tertiary, '#CD7F32']
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* 卡片1：内容类型效果 */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-            <BarChart2 size={16} className="text-green-600" />
+      {/* 内容类型效果 */}
+      <Card style={{ padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: tokens.radius.buttonSm, backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BarChart2 size={15} style={{ color: '#065F46' }} />
           </div>
-          <span className="text-sm font-medium text-gray-600">哪类内容最受欢迎</span>
+          <span style={{ fontSize: '13px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.secondary }}>哪类内容最受欢迎</span>
         </div>
         <div className="space-y-2">
           {data.topByType.slice(0, 4).map((t, i) => (
-            <div key={t.type} className="flex items-center gap-2">
-              <span className={`text-xs w-4 text-center font-bold ${i === 0 ? 'text-amber-500' : 'text-gray-300'}`}>
+            <div key={t.type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', width: '16px', textAlign: 'center', fontWeight: tokens.typography.weight.semibold, color: RANK_COLOR[i] ?? tokens.color.text.tertiary, flexShrink: 0 }}>
                 {i === 0 ? '★' : `${i + 1}`}
               </span>
-              <span className="text-sm text-gray-700 flex-1">{t.type}</span>
-              <span className="text-xs text-gray-400">均 {(t.avgRead / 10000).toFixed(1)}万</span>
+              <span style={{ fontSize: '13px', color: tokens.color.text.secondary, flex: 1 }}>{t.type}</span>
+              <span style={{ fontSize: '11px', color: tokens.color.text.tertiary }}>均 {(t.avgRead / 10000).toFixed(1)}万</span>
             </div>
           ))}
         </div>
         {topType && (
-          <div className="mt-3 pt-3 border-t border-gray-50 text-xs text-green-600">
+          <p style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${tokens.color.divider}`, fontSize: '11px', color: '#065F46' }}>
             💡 {topType.type}类文章平均阅读最高
-          </div>
+          </p>
         )}
-      </div>
+      </Card>
 
-      {/* 卡片2：历史爆款 */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-            <Award size={16} className="text-amber-500" />
+      {/* 历史爆款 */}
+      <Card style={{ padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: tokens.radius.buttonSm, backgroundColor: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Award size={15} style={{ color: '#F59E0B' }} />
           </div>
-          <span className="text-sm font-medium text-gray-600">历史爆款 Top 3</span>
+          <span style={{ fontSize: '13px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.secondary }}>历史爆款 Top 3</span>
         </div>
         <div className="space-y-3">
           {data.topArticles.slice(0, 3).map((a, i) => (
             <div key={i}>
-              <div className="text-xs text-gray-500 mb-0.5 flex items-center gap-1">
-                <span className={`font-bold ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : 'text-orange-300'}`}>
-                  #{i + 1}
-                </span>
-                <span className="text-green-600 font-medium">{(a.readCount / 10000).toFixed(1)}万</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '11px', fontWeight: tokens.typography.weight.semibold, color: RANK_COLOR[i] ?? tokens.color.text.tertiary }}>#{i + 1}</span>
+                <span style={{ fontSize: '11px', color: '#065F46', fontWeight: tokens.typography.weight.medium }}>{(a.readCount / 10000).toFixed(1)}万</span>
               </div>
-              <div className="text-sm text-gray-800 leading-snug line-clamp-2">{a.title}</div>
+              <p className="line-clamp-2" style={{ fontSize: '12px', color: tokens.color.text.primary, lineHeight: 1.5 }}>{a.title}</p>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      {/* 卡片3：发布时机 + 竞品 */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-            <Clock size={16} className="text-blue-500" />
+      {/* 发布时机 */}
+      <Card style={{ padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: tokens.radius.buttonSm, backgroundColor: '#EBF4FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Clock size={15} style={{ color: tokens.color.accent }} />
           </div>
-          <span className="text-sm font-medium text-gray-600">发布时机</span>
-          {/* 悬浮气泡：仅在 hover 时显示策略文本 */}
-          <div className="relative group ml-auto">
-            <span className="text-[10px] text-blue-400 border border-blue-100 rounded-full px-2 py-0.5 cursor-default select-none">
+          <span style={{ fontSize: '13px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.secondary }}>发布时机</span>
+          <div style={{ position: 'relative', marginLeft: 'auto' }} className="group">
+            <span style={{ fontSize: '10px', color: tokens.color.accent, border: `1px solid #BFDBFE`, borderRadius: tokens.radius.button, padding: '2px 8px', cursor: 'default', userSelect: 'none' }}>
               查看建议
             </span>
-            <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs text-gray-600 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+            <div style={{
+              position: 'absolute', right: 0, top: 'calc(100% + 4px)', width: '220px',
+              backgroundColor: tokens.color.base.white, border: `1px solid ${tokens.color.border}`,
+              borderRadius: tokens.radius.buttonSm, boxShadow: tokens.shadow.diffuse,
+              padding: '10px 12px', fontSize: '12px', color: tokens.color.text.secondary, lineHeight: 1.5,
+              zIndex: 20, pointerEvents: 'none',
+            }} className="opacity-0 group-hover:opacity-100 transition-opacity">
               {data.bestTimeHint}
             </div>
           </div>
         </div>
         {data.competitorInsight && (
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <TrendingUp size={11} /> 竞品对比
-            </div>
-            <div className="text-xs text-gray-600">{data.competitorInsight}</div>
+          <div style={{ backgroundColor: tokens.color.base.gray, borderRadius: tokens.radius.buttonSm, padding: '10px 12px' }}>
+            <p style={{ fontSize: '11px', color: tokens.color.text.tertiary, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+              <TrendingUp size={10} /> 竞品对比
+            </p>
+            <p style={{ fontSize: '12px', color: tokens.color.text.secondary }}>{data.competitorInsight}</p>
           </div>
         )}
-        <div className="mt-3 text-xs text-gray-400">
+        <p style={{ marginTop: '10px', fontSize: '11px', color: tokens.color.text.tertiary }}>
           基于 {data.totalArticles} 篇历史文章 · 均阅读 {(data.avgReadCount / 10000).toFixed(1)}万
-        </div>
-      </div>
+        </p>
+      </Card>
     </div>
   )
 }

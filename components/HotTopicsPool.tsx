@@ -1,10 +1,11 @@
 'use client'
 
-import { TrendingUp, Sparkles, Loader2 } from 'lucide-react'
+import { Sparkles, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import Image from 'next/image'
+import { Card, Badge } from '@/components/ui'
+import { tokens } from '@/lib/design-tokens'
 
-// 社交平台图标映射
 const PLATFORM_ICONS: Record<string, string> = {
   '微博': '/platforms/微博.svg',
   '抖音': '/platforms/抖音.svg',
@@ -27,6 +28,7 @@ interface HotTopicsPoolProps {
 
 export default function HotTopicsPool({ topics, onGenerateIdea }: HotTopicsPoolProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const handleGenerate = async (topic: HotTopic) => {
     setLoadingId(topic.id)
@@ -34,7 +36,6 @@ export default function HotTopicsPool({ topics, onGenerateIdea }: HotTopicsPoolP
     setLoadingId(null)
   }
 
-  // 按热度排序
   const sortedTopics = [...topics].sort((a, b) => b.heat - a.heat)
 
   return (
@@ -42,88 +43,87 @@ export default function HotTopicsPool({ topics, onGenerateIdea }: HotTopicsPoolP
       {sortedTopics.map((topic, index) => (
         <div
           key={topic.id}
-          className="bg-white rounded-lg border-2 p-3 transition-all hover:shadow-md group"
-          style={{ borderColor: 'var(--border)' }}
+          onMouseEnter={() => setHoveredId(topic.id)}
+          onMouseLeave={() => setHoveredId(null)}
         >
-          {/* 热度排名和平台 */}
+          <Card style={{ padding: '12px' }}>
+          {/* 顶行：排名 + 平台图标 */}
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold"
-                style={{
-                  backgroundColor: index < 3 ? 'var(--danger)' : 'var(--background-secondary)',
-                  color: index < 3 ? 'white' : 'var(--foreground-tertiary)'
-                }}
-              >
-                {index + 1}
-              </div>
-              <TrendingUp size={14} style={{ color: 'var(--danger)' }} />
-              <span className="text-xs font-bold" style={{ color: 'var(--danger)' }}>
-                {topic.heat}
-              </span>
-            </div>
+            <span
+              style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: tokens.radius.buttonSm,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '11px',
+                fontWeight: tokens.typography.weight.semibold,
+                backgroundColor: index < 3 ? '#FF3B30' : tokens.color.base.gray,
+                color: index < 3 ? tokens.color.base.white : tokens.color.text.tertiary,
+                flexShrink: 0,
+              }}
+            >
+              {index + 1}
+            </span>
             {PLATFORM_ICONS[topic.source] && (
-              <Image
-                src={PLATFORM_ICONS[topic.source]}
-                alt={topic.source}
-                width={16}
-                height={16}
-                className="w-4 h-4"
-              />
+              <Image src={PLATFORM_ICONS[topic.source]} alt={topic.source} width={16} height={16} />
             )}
           </div>
 
           {/* 标题 */}
-          <h3 className="text-sm font-medium mb-2 line-clamp-2 leading-snug" style={{ color: 'var(--foreground)' }}>
-            {topic.title}
-          </h3>
-
-          {/* 标签 */}
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {topic.tags.slice(0, 3).map((tag, idx) => (
-              <span
-                key={idx}
-                className="text-xs px-1.5 py-0.5 rounded font-medium"
-                style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-
-          {/* 生成按钮 */}
-          <button
-            onClick={() => handleGenerate(topic)}
-            disabled={loadingId === topic.id}
-            className="w-full py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-b-4 opacity-0 group-hover:opacity-100"
+          <p
+            className="line-clamp-2"
             style={{
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              borderBottomColor: 'var(--primary-hover)'
-            }}
-            onMouseEnter={(e) => {
-              if (loadingId !== topic.id) {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (loadingId !== topic.id) {
-                e.currentTarget.style.transform = 'translateY(0)'
-              }
+              fontSize: '13px',
+              fontWeight: tokens.typography.weight.medium,
+              color: tokens.color.text.primary,
+              lineHeight: 1.5,
+              marginBottom: hoveredId === topic.id ? '8px' : '0',
+              transition: 'margin 0.15s',
             }}
           >
-            {loadingId === topic.id ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles size={14} />
-                AI 标题
-              </>
-            )}
-          </button>
+            {topic.title}
+          </p>
+
+          {/* 悬停时展示生成按钮 */}
+          <div
+            style={{
+              overflow: 'hidden',
+              maxHeight: hoveredId === topic.id ? '40px' : '0',
+              opacity: hoveredId === topic.id ? 1 : 0,
+              transition: 'max-height 0.2s ease, opacity 0.15s ease',
+            }}
+          >
+            <button
+              disabled={loadingId === topic.id}
+              onClick={() => handleGenerate(topic)}
+              style={{
+                width: '100%',
+                height: '30px',
+                borderRadius: tokens.radius.buttonSm,
+                border: 'none',
+                backgroundColor: tokens.color.accent,
+                color: tokens.color.base.white,
+                fontSize: '12px',
+                fontWeight: tokens.typography.weight.medium,
+                fontFamily: tokens.typography.fontFamily.zh,
+                cursor: loadingId === topic.id ? 'not-allowed' : 'pointer',
+                opacity: loadingId === topic.id ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+              }}
+            >
+              {loadingId === topic.id ? (
+                <><Loader2 size={12} className="animate-spin" />生成中...</>
+              ) : (
+                <><Sparkles size={12} />生成选题</>
+              )}
+            </button>
+          </div>
+          </Card>
         </div>
       ))}
     </div>

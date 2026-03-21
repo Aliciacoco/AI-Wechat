@@ -3,6 +3,8 @@
 import { Sparkles, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import Image from 'next/image'
+import { Card } from '@/components/ui'
+import { tokens } from '@/lib/design-tokens'
 
 interface ContentType {
   name: string
@@ -15,7 +17,7 @@ interface AccountBalance {
   name: string
   logo: string
   contentTypes: ContentType[]
-  recommendation: string // 推荐发布的类型
+  recommendation: string
 }
 
 interface ContentBalancerProps {
@@ -25,6 +27,7 @@ interface ContentBalancerProps {
 
 export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBalancerProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const handleGenerate = async (accountId: string, recommendation: string) => {
     setLoadingId(accountId)
@@ -37,33 +40,33 @@ export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBal
       {accounts.map((account) => (
         <div
           key={account.id}
-          className="bg-white rounded-lg border-2 p-4 transition-all hover:shadow-md group"
-          style={{ borderColor: 'var(--border)' }}
+          onMouseEnter={() => setHoveredId(account.id)}
+          onMouseLeave={() => setHoveredId(null)}
         >
+          <Card style={{ padding: '16px' }}>
           {/* 账号头部 */}
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full overflow-hidden relative flex-shrink-0">
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
               {account.logo ? (
-                <Image
-                  src={account.logo}
-                  alt={account.name}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={account.logo} alt={account.name} fill className="object-cover" />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center text-sm font-bold"
-                  style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
+                  style={{
+                    width: '100%', height: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '13px', fontWeight: tokens.typography.weight.semibold,
+                    backgroundColor: tokens.color.base.gray, color: tokens.color.text.tertiary,
+                  }}
                 >
                   {account.name.slice(0, 2)}
                 </div>
               )}
             </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--foreground)' }}>
+            <div>
+              <p style={{ fontSize: '13px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.primary }}>
                 {account.name}
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>
+              </p>
+              <p style={{ fontSize: '11px', color: tokens.color.text.tertiary, marginTop: '2px' }}>
                 近30天内容类型分布
               </p>
             </div>
@@ -74,39 +77,21 @@ export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBal
             {account.contentTypes.map((type, index) => {
               const isLow = type.current < type.recommended
               const isHigh = type.current > type.recommended
+              const barColor = isLow ? '#FF3B30' : isHigh ? '#F59E0B' : tokens.color.accent
 
               return (
                 <div key={index}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium" style={{ color: 'var(--foreground-secondary)' }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span style={{ fontSize: '12px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.secondary }}>
                       {type.name}
                     </span>
-                    <span
-                      className="font-bold"
-                      style={{
-                        color: isLow ? '#ef4444' : isHigh ? '#f59e0b' : 'var(--primary)'
-                      }}
-                    >
+                    <span style={{ fontSize: '12px', fontWeight: tokens.typography.weight.semibold, color: barColor }}>
                       {type.current}%
                     </span>
                   </div>
-                  <div className="relative h-2 rounded-full" style={{ backgroundColor: 'var(--background-secondary)' }}>
-                    <div
-                      className="absolute top-0 left-0 h-full rounded-full transition-all"
-                      style={{
-                        width: `${type.current}%`,
-                        backgroundColor: isLow ? '#ef4444' : isHigh ? '#fbbf24' : 'var(--primary)',
-                      }}
-                    />
-                    {/* 目标线 */}
-                    <div
-                      className="absolute top-0 h-full w-0.5"
-                      style={{
-                        left: `${type.recommended}%`,
-                        backgroundColor: 'var(--foreground-secondary)',
-                        opacity: 0.5
-                      }}
-                    />
+                  <div style={{ position: 'relative', height: '6px', borderRadius: '99px', backgroundColor: tokens.color.base.gray }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', borderRadius: '99px', width: `${type.current}%`, backgroundColor: barColor, transition: 'width 0.3s' }} />
+                    <div style={{ position: 'absolute', top: 0, height: '100%', width: '1.5px', left: `${type.recommended}%`, backgroundColor: tokens.color.text.tertiary, opacity: 0.4 }} />
                   </div>
                 </div>
               )
@@ -115,53 +100,60 @@ export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBal
 
           {/* 推荐建议 */}
           <div
-            className="rounded-lg p-3 mb-3"
             style={{
-              backgroundColor: 'var(--primary-light)',
-              borderLeft: '3px solid var(--primary)'
+              borderRadius: tokens.radius.buttonSm,
+              padding: '10px 12px',
+              marginBottom: '12px',
+              backgroundColor: tokens.color.base.gray,
+              borderLeft: `3px solid ${tokens.color.border}`,
             }}
           >
-            <div className="text-xs font-semibold mb-1" style={{ color: 'var(--primary)' }}>
-              📝 推荐发布类型
-            </div>
-            <p className="text-sm font-bold" style={{ color: 'var(--foreground)' }}>
+            <p style={{ fontSize: '11px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.tertiary, marginBottom: '3px' }}>
+              推荐发布类型
+            </p>
+            <p style={{ fontSize: '13px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.secondary }}>
               {account.recommendation}
             </p>
           </div>
 
-          {/* AI 生成按钮 */}
-          <button
-            onClick={() => handleGenerate(account.id, account.recommendation)}
-            disabled={loadingId === account.id}
-            className="w-full py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-b-4 opacity-0 group-hover:opacity-100"
+          {/* 生成按钮 - 悬停时展示 */}
+          <div
             style={{
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              borderBottomColor: 'var(--primary-hover)'
-            }}
-            onMouseEnter={(e) => {
-              if (loadingId !== account.id) {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (loadingId !== account.id) {
-                e.currentTarget.style.transform = 'translateY(0)'
-              }
+              overflow: 'hidden',
+              maxHeight: hoveredId === account.id ? '40px' : '0',
+              opacity: hoveredId === account.id ? 1 : 0,
+              transition: 'max-height 0.2s ease, opacity 0.15s ease',
             }}
           >
-            {loadingId === account.id ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles size={14} />
-                AI 标题
-              </>
-            )}
-          </button>
+            <button
+              disabled={loadingId === account.id}
+              onClick={() => handleGenerate(account.id, account.recommendation)}
+              style={{
+                width: '100%',
+                height: '30px',
+                borderRadius: tokens.radius.buttonSm,
+                border: 'none',
+                backgroundColor: tokens.color.accent,
+                color: tokens.color.base.white,
+                fontSize: '12px',
+                fontWeight: tokens.typography.weight.medium,
+                fontFamily: tokens.typography.fontFamily.zh,
+                cursor: loadingId === account.id ? 'not-allowed' : 'pointer',
+                opacity: loadingId === account.id ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+              }}
+            >
+              {loadingId === account.id ? (
+                <><Loader2 size={12} className="animate-spin" />生成中...</>
+              ) : (
+                <><Sparkles size={12} />生成选题</>
+              )}
+            </button>
+          </div>
+        </Card>
         </div>
       ))}
     </div>
