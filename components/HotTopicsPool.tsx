@@ -40,51 +40,34 @@ export default function HotTopicsPool({ topics, onGenerateIdea }: HotTopicsPoolP
 
   return (
     <div className="space-y-2">
-      {sortedTopics.map((topic, index) => (
+      {sortedTopics.map((topic) => (
         <div
           key={topic.id}
           onMouseEnter={() => setHoveredId(topic.id)}
           onMouseLeave={() => setHoveredId(null)}
         >
           <Card style={{ padding: '12px' }}>
-          {/* 顶行：排名 + 平台图标 */}
-          <div className="flex items-center justify-between mb-2">
-            <span
+          {/* 平台图标（左侧放大）+ 标题 */}
+          <div className="flex items-start gap-3 mb-2">
+            {PLATFORM_ICONS[topic.source] ? (
+              <Image src={PLATFORM_ICONS[topic.source]} alt={topic.source} width={28} height={28} style={{ flexShrink: 0, marginTop: '1px' }} />
+            ) : (
+              <div style={{ width: '28px', height: '28px', flexShrink: 0 }} />
+            )}
+            <p
+              className="line-clamp-2"
               style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: tokens.radius.buttonSm,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-                fontWeight: tokens.typography.weight.semibold,
-                backgroundColor: index < 3 ? '#FF3B30' : tokens.color.base.gray,
-                color: index < 3 ? tokens.color.base.white : tokens.color.text.tertiary,
-                flexShrink: 0,
+                fontSize: '13px',
+                fontWeight: tokens.typography.weight.medium,
+                color: tokens.color.text.primary,
+                lineHeight: 1.5,
+                flex: 1,
+                marginBottom: hoveredId === topic.id ? '0' : '0',
               }}
             >
-              {index + 1}
-            </span>
-            {PLATFORM_ICONS[topic.source] && (
-              <Image src={PLATFORM_ICONS[topic.source]} alt={topic.source} width={16} height={16} />
-            )}
+              {topic.title}
+            </p>
           </div>
-
-          {/* 标题 */}
-          <p
-            className="line-clamp-2"
-            style={{
-              fontSize: '13px',
-              fontWeight: tokens.typography.weight.medium,
-              color: tokens.color.text.primary,
-              lineHeight: 1.5,
-              marginBottom: hoveredId === topic.id ? '8px' : '0',
-              transition: 'margin 0.15s',
-            }}
-          >
-            {topic.title}
-          </p>
 
           {/* 悬停时展示生成按钮 */}
           <div

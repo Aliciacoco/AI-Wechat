@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { TrendingUp, CalendarDays, BarChart2 } from 'lucide-react'
 import SuperSearch from '@/components/SuperSearch'
 import HotTopicsPool from '@/components/HotTopicsPool'
 import CalendarNodes from '@/components/CalendarNodes'
@@ -8,6 +9,13 @@ import ContentBalancer from '@/components/ContentBalancer'
 import AIGenerateModal from '@/components/AIGenerateModal'
 import { PromptButton } from '@/components/AlgorithmInfo'
 import { NJNU_CALENDAR_NODES, getUpcomingNodes } from '@/data/njnu-calendar'
+import {
+  buildHotTopicPrompt,
+  buildCalendarNodePrompt,
+  buildContentBalancePrompt,
+  buildTodayRecommendPrompt,
+  buildSearchPrompt,
+} from '@/lib/inspire-prompts'
 
 // 热点数据
 const HOT_TOPICS = [
@@ -55,8 +63,7 @@ const HOT_TOPICS = [
   },
 ]
 
-// 节点日历数据 —— 从南师大全年节点库动态取近90天内节点
-const CALENDAR_NODES = getUpcomingNodes(NJNU_CALENDAR_NODES)
+// 节点日历数据在模块级不计算（避免 SSR/client 不一致），移入组件 state
 
 // 内容平衡数据 - 按账号展示
 const CONTENT_BALANCES = [
@@ -89,61 +96,45 @@ const CONTENT_BALANCES = [
 ]
 
 export default function TopicsScene() {
-  const [searchResults, setSearchResults] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [currentTopic, setCurrentTopic] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
+  const [currentPrompt, setCurrentPrompt] = useState('')
+  const [displayTopic, setDisplayTopic] = useState('')
   const [isLoadingRecommend, setIsLoadingRecommend] = useState(false)
+  // 客户端计算，避免 SSR/hydration 不一致
+  const [calendarNodes, setCalendarNodes] = useState<ReturnType<typeof getUpcomingNodes>>([])
+  useEffect(() => {
+    setCalendarNodes(getUpcomingNodes(NJNU_CALENDAR_NODES))
+  }, [])
 
-  const handleSearch = async (query: string) => {
-    console.log('搜索查询:', query)
-    setSearchResults(query)
-    setIsSearching(true)
-
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: query, type: 'titles' })
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setCurrentTopic(query)
-        setModalOpen(true)
-      } else {
-        alert('生成失败：' + (result.error || '未知错误'))
-      }
-    } catch (error) {
-      console.error('Search error:', error)
-      alert('请求失败，请重试')
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  const handleTagSelect = (label: string) => {
-    setSearchResults(label)
-    handleSearch(label)
-  }
-
-  const handleGenerateIdea = async (item: any) => {
-    console.log('生成灵感:', item)
-    let topic = ''
-    if (item.title) {
-      topic = item.title
-    } else if (item.category) {
-      topic = item.category
-    } else if (typeof item === 'string') {
-      topic = item
-    } else {
-      topic = '随机选题'
-    }
-
-    setCurrentTopic(topic)
-    await new Promise(resolve => setTimeout(resolve, 300))
+  function openModal(prompt: string, label: string) {
+    setCurrentPrompt(prompt)
+    setDisplayTopic(label)
     setModalOpen(true)
+  }
+
+  const handleSearch = (query: string) => {
+    openModal(buildSearchPrompt(query), query)
+  }
+
+  const handleGenerateIdea = (item: any) => {
+    // 全网热点：item 有 title/source/tags/heat
+    if (item.source !== undefined) {
+      openModal(buildHotTopicPrompt(item), `热点：${item.title}`)
+      return
+    }
+    // 节点日历：item 有 type/topics/description（CalendarNode）
+    if (item.type !== undefined && item.topics !== undefined) {
+      openModal(buildCalendarNodePrompt(item), `节点：${item.title}`)
+      return
+    }
+    // fallback
+    openModal(buildSearchPrompt(typeof item === 'string' ? item : item.title || ''), item.title || item)
+  }
+
+  const handleContentBalanceIdea = (accountId: string, recommendation: string) => {
+    const account = CONTENT_BALANCES.find(a => a.id === accountId)
+    if (!account) return
+    openModal(buildContentBalancePrompt(account), `内容平衡：${account.name}`)
   }
 
   return (
@@ -158,26 +149,9 @@ export default function TopicsScene() {
           <SuperSearch
             onSearch={handleSearch}
             recommendLoading={isLoadingRecommend}
-            onTodayRecommend={async () => {
-              setIsLoadingRecommend(true)
-              try {
-                const res = await fetch('/api/generate', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ type: 'recommendation', accountId: 'njnu-main', accountName: '南京师范大学' }),
-                })
-                const result = await res.json()
-                const topic = result.success && result.data?.theme
-                  ? result.data.theme
-                  : '南师大今日推荐选题'
-                setCurrentTopic(topic)
-                setModalOpen(true)
-              } catch {
-                setCurrentTopic('南师大今日推荐选题')
-                setModalOpen(true)
-              } finally {
-                setIsLoadingRecommend(false)
-              }
+            onTodayRecommend={() => {
+              const prompt = buildTodayRecommendPrompt(calendarNodes, CONTENT_BALANCES)
+              openModal(prompt, '今日最推荐')
             }}
           />
         </div>
@@ -187,9 +161,10 @@ export default function TopicsScene() {
           {/* 全网热点 */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-                <span>🔥</span> 全网热点
-              </h2>
+              <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <TrendingUp size={15} color="#86868B" />
+              </div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>全网热点</h2>
             </div>
             <HotTopicsPool topics={HOT_TOPICS} onGenerateIdea={handleGenerateIdea} />
           </section>
@@ -197,27 +172,29 @@ export default function TopicsScene() {
           {/* 节点日历 */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-                <span>📅</span> 节点日历
-              </h2>
+              <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CalendarDays size={15} color="#86868B" />
+              </div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>节点日历</h2>
             </div>
-            <CalendarNodes nodes={CALENDAR_NODES} onGenerateIdea={handleGenerateIdea} />
+            <CalendarNodes nodes={calendarNodes} onGenerateIdea={handleGenerateIdea} />
           </section>
 
-          {/* 内容调节器 */}
+          {/* 内容平衡 */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-                <span>⚖️</span> 内容平衡
-              </h2>
+              <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <BarChart2 size={15} color="#86868B" />
+              </div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>内容平衡</h2>
             </div>
-            <ContentBalancer accounts={CONTENT_BALANCES} onGenerateIdea={(accountId, recommendation) => handleGenerateIdea(recommendation)} />
+            <ContentBalancer accounts={CONTENT_BALANCES} onGenerateIdea={handleContentBalanceIdea} />
           </section>
         </div>
       </div>
 
-      {/* AI 生成弹窗 */}
-      <AIGenerateModal isOpen={modalOpen} onClose={() => setModalOpen(false)} topic={currentTopic} />
+      {/* AI 灵感全屏页 */}
+      <AIGenerateModal isOpen={modalOpen} onClose={() => setModalOpen(false)} initialPrompt={currentPrompt} displayTopic={displayTopic} />
     </div>
   )
 }

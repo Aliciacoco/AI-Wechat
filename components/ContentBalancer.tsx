@@ -48,7 +48,7 @@ export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBal
           <div className="flex items-center gap-3 mb-4">
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
               {account.logo ? (
-                <Image src={account.logo} alt={account.name} fill className="object-cover" />
+                <Image src={account.logo} alt={account.name} fill sizes="40px" className="object-cover" />
               ) : (
                 <div
                   style={{
@@ -75,9 +75,8 @@ export default function ContentBalancer({ accounts, onGenerateIdea }: ContentBal
           {/* 内容类型条形图 */}
           <div className="space-y-2.5 mb-4">
             {account.contentTypes.map((type, index) => {
-              const isLow = type.current < type.recommended
-              const isHigh = type.current > type.recommended
-              const barColor = isLow ? '#FF3B30' : isHigh ? '#F59E0B' : tokens.color.accent
+              const PALETTE = ['#EF4849', '#1CB0F6', '#FFB100', '#58CC02']
+              const barColor = PALETTE[index % PALETTE.length]
 
               return (
                 <div key={index}>

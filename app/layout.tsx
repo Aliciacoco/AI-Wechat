@@ -33,7 +33,7 @@ export default function RootLayout({
       >
         <SceneProvider>
           <TopNav />
-          <div className="pt-14 min-h-screen">
+          <div className="pt-[68px] min-h-screen">
             <SceneContent />
           </div>
         </SceneProvider>

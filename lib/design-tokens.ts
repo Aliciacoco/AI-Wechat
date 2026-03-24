@@ -22,7 +22,15 @@ export const tokens = {
       tertiary: '#86868B',  // 辅助
     },
     // 品牌色 —— 仅用于关键行动点（CTA）
-    accent: '#0071E3',
+    accent: '#0D99FF',
+    // 功能色板（多邻国风格）
+    palette: {
+      red:    '#EF4849',
+      blue:   '#1CB0F6',
+      yellow: '#FFB100',
+      green:  '#58CC02',
+      purple: '#9069CD',
+    },
     // 分割线
     divider: '#F2F2F2',
     // 边框

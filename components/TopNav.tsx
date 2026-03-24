@@ -20,7 +20,7 @@ export default function TopNav() {
     <>
       <header
         style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: '56px',
+          position: 'fixed', top: 0, left: 0, right: 0, height: '68px',
           backgroundColor: tokens.color.base.white,
           borderBottom: `1px solid ${tokens.color.divider}`,
           boxShadow: tokens.shadow.diffuse,
@@ -66,7 +66,7 @@ export default function TopNav() {
                 key={tab.id}
                 onClick={() => setScene(tab.id)}
                 style={{
-                  padding: '5px 18px',
+                  padding: '8px 20px',
                   borderRadius: tokens.radius.button,
                   border: 'none',
                   cursor: 'pointer',
@@ -93,9 +93,9 @@ export default function TopNav() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            height: '28px',
-            padding: '0 12px',
-            fontSize: '12px',
+            height: '36px',
+            padding: '0 14px',
+            fontSize: '13px',
             fontWeight: tokens.typography.weight.medium,
             fontFamily: tokens.typography.fontFamily.zh,
             borderRadius: tokens.radius.button,
@@ -116,7 +116,7 @@ export default function TopNav() {
           }}
         >
           <Database size={13} style={{ opacity: 0.7 }} />
-          校本资料库
+          南师资料库
         </button>
       </header>
 

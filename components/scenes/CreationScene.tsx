@@ -9,12 +9,14 @@ import EditorModal from '@/components/EditorModal'
 interface FavoriteItem {
   id: string
   title: string
-  style: string
+  style?: string
+  content?: string   // AI 回复完整 Markdown
   source: string
   createdAt: string
 }
 
 function loadFavorites(): FavoriteItem[] {
+  if (typeof window === 'undefined') return []
   const stored = localStorage.getItem('favorites')
   if (stored) {
     try {
@@ -23,11 +25,7 @@ function loadFavorites(): FavoriteItem[] {
       console.error('Failed to load favorites:', e)
     }
   }
-  return [
-    { id: '1', title: '春分时节，随园的这抹绿意藏着师大人的诗与远方', style: '情感共鸣型', source: '选题页 · 全网热点', createdAt: '2026-03-19 10:30' },
-    { id: '2', title: '随园春色｜南师大最美春天打卡地图来了！', style: '信息实用型', source: 'AI 生成 · 标题推荐', createdAt: '2026-03-19 09:15' },
-    { id: '3', title: '春天来了，随园的这些宝藏角落你都去过吗？', style: '悬念好奇型', source: 'AI 生成 · 标题推荐', createdAt: '2026-03-18 16:45' },
-  ]
+  return []
 }
 
 export default function CreationScene() {
@@ -35,6 +33,7 @@ export default function CreationScene() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorTitle, setEditorTitle] = useState('')
+  const [editorContent, setEditorContent] = useState('')
 
   const refresh = () => {
     setFavorites(loadFavorites())
@@ -98,11 +97,26 @@ export default function CreationScene() {
               <Card key={item.id} style={{ padding: '16px 20px' }}>
                 <div className="flex items-start justify-between gap-4">
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '15px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.primary, lineHeight: 1.6, marginBottom: '10px' }}>
+                    <p style={{ fontSize: '15px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.primary, lineHeight: 1.6, marginBottom: '6px' }}>
                       {item.title}
                     </p>
+                    {/* 选题思路摘要（跳过建议标题行，展示其他字段） */}
+                    {item.content && (
+                      <p style={{
+                        fontSize: '12px', color: tokens.color.text.tertiary,
+                        lineHeight: 1.6, marginBottom: '8px',
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>
+                        {item.content.split('\n')
+                          .filter(line => !line.startsWith('建议标题'))
+                          .map(line => line.replace(/^[^：]+：/, '').trim())
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="accent" style={{ fontSize: '11px' }}>{item.style}</Badge>
+                      {item.style && <Badge variant="accent" style={{ fontSize: '11px' }}>{item.style}</Badge>}
                       <span style={{ fontSize: '12px', color: tokens.color.text.tertiary }}>
                         来源：{item.source}
                       </span>
@@ -116,6 +130,7 @@ export default function CreationScene() {
                     <button
                       onClick={() => {
                         setEditorTitle(item.title)
+                        setEditorContent(item.content || '')
                         setEditorOpen(true)
                       }}
                       style={{
@@ -130,7 +145,7 @@ export default function CreationScene() {
                         display: 'flex', alignItems: 'center', gap: '4px',
                         cursor: 'pointer', transition: 'background-color 0.15s',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0062C4' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0B7FCC' }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = tokens.color.accent }}
                     >
                       进入创作
@@ -179,7 +194,7 @@ export default function CreationScene() {
         )}
       </div>
 
-      <EditorModal isOpen={editorOpen} onClose={() => setEditorOpen(false)} title={editorTitle} />
+      <EditorModal isOpen={editorOpen} onClose={() => setEditorOpen(false)} title={editorTitle} inspireContent={editorContent} />
     </div>
   )
 }

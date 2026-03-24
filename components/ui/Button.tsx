@@ -32,7 +32,7 @@ const variantMap: Record<ButtonVariant, { base: CSSProperties; hover: CSSPropert
       border: 'none',
     },
     hover: {
-      backgroundColor: '#0062C4',
+      backgroundColor: '#0B7FCC',
     },
   },
   ghost: {

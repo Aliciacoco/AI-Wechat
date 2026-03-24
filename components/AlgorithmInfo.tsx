@@ -2,7 +2,7 @@
 
 import { X, FileText } from 'lucide-react'
 import { useState } from 'react'
-import { TOPIC_STRATEGY_PROMPT } from '@/lib/prompts'
+import { TOPIC_STRATEGY_PROMPT_TEXT } from '@/lib/prompts'
 import { tokens } from '@/lib/design-tokens'
 
 // 独立的提示词按钮，可单独使用
@@ -73,77 +73,20 @@ export function PromptButton() {
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
-              <div>
-                <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#86868B', letterSpacing: '0.05em' }}>
-                  ROLE · 角色设定
-                </div>
-                <div className="rounded-2xl p-4" style={{ backgroundColor: '#FBFBFD', border: '1px solid #E5E5E5' }}>
-                  <p className="text-sm leading-relaxed" style={{ color: '#424245' }}>
-                    {TOPIC_STRATEGY_PROMPT.role}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#86868B', letterSpacing: '0.05em' }}>
-                  STRATEGY · {TOPIC_STRATEGY_PROMPT.framework.name}
-                </div>
-                <div className="space-y-2">
-                  {TOPIC_STRATEGY_PROMPT.framework.dimensions.map((d, i) => (
-                    <div key={d.key} className="rounded-2xl p-4" style={{ backgroundColor: '#FBFBFD', border: '1px solid #E5E5E5' }}>
-                      <div className="text-sm font-semibold mb-1" style={{ color: '#1D1D1F' }}>
-                        {i + 1}. {d.label}
-                      </div>
-                      <p className="text-xs leading-relaxed" style={{ color: '#424245' }}>{d.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#86868B', letterSpacing: '0.05em' }}>
-                  CATEGORIES · 选题类型矩阵
-                </div>
-                <div className="space-y-2">
-                  {TOPIC_STRATEGY_PROMPT.categories.map((cat) => (
-                    <div key={cat.id} className="rounded-2xl p-4" style={{ backgroundColor: '#FBFBFD', border: '1px solid #E5E5E5' }}>
-                      <div className="text-sm font-semibold mb-1" style={{ color: '#1D1D1F' }}>{cat.name}</div>
-                      <p className="text-xs mb-1" style={{ color: '#424245' }}>
-                        <span style={{ color: '#0071E3' }}>要求：</span>{cat.requirement}
-                      </p>
-                      <p className="text-xs" style={{ color: '#86868B' }}>
-                        思考方向：{cat.direction}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#86868B', letterSpacing: '0.05em' }}>
-                  CONSTRAINTS · 约束条件
-                </div>
-                <div className="rounded-2xl p-4" style={{ backgroundColor: '#FBFBFD', border: '1px solid #E5E5E5' }}>
-                  <ul className="space-y-1.5">
-                    {TOPIC_STRATEGY_PROMPT.constraints.map((c, i) => (
-                      <li key={i} className="text-xs flex gap-2" style={{ color: '#424245' }}>
-                        <span style={{ color: '#0071E3', flexShrink: 0 }}>·</span>
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#86868B', letterSpacing: '0.05em' }}>
-                  OUTPUT · 输出格式
-                </div>
-                <div className="rounded-2xl p-4 font-mono text-xs" style={{ backgroundColor: '#FBFBFD', border: '1px solid #E5E5E5', color: '#424245', whiteSpace: 'pre-wrap' }}>
-                  {TOPIC_STRATEGY_PROMPT.outputFormat}
-                </div>
-              </div>
+            <div className="p-6">
+              <pre
+                style={{
+                  fontSize: '13px',
+                  color: '#424245',
+                  lineHeight: 1.7,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontFamily: tokens.typography.fontFamily.zh,
+                  margin: 0,
+                }}
+              >
+                {TOPIC_STRATEGY_PROMPT_TEXT}
+              </pre>
             </div>
           </div>
         </div>

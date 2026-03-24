@@ -1,353 +1,576 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Modal from './Modal'
-import AITitleSuggestions from './AITitleSuggestions'
-import HistoricalReview from './HistoricalReview'
-import BenchmarkCases from './BenchmarkCases'
+import React, { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, RotateCcw, Send, Star } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { tokens } from '@/lib/design-tokens'
+
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 interface AIGenerateModalProps {
   isOpen: boolean
   onClose: () => void
-  topic: string
+  /** 发给 AI 的完整初始提示词 */
+  initialPrompt: string
+  /** TopBar 展示的简短主题描述（可选，默认截取 initialPrompt 前20字） */
+  displayTopic?: string
 }
 
-// 模拟数据
-const MOCK_TITLES = [
-  {
-    id: '1',
-    title: '春招季来了！南师学子就业力全面解析',
-    style: '信息实用型',
-    description: '清晰传达就业数据价值',
-    audience: '在校生、校友',
-    estimatedViews: 8500,
-    tone: '专业权威',
-    hotspot: '春招热点',
-  },
-  {
-    id: '2',
-    title: '还在焦虑找工作？看南师大如何助力学子圆梦',
-    style: '情感共鸣型',
-    description: '触动求职焦虑情绪，引发共鸣',
-    audience: '应届生',
-    estimatedViews: 12000,
-    tone: '亲切共鸣',
-    hotspot: '就业焦虑',
-  },
-  {
-    id: '3',
-    title: '南师学子就业去向曝光：这10个数据让人惊喜',
-    style: '悬念好奇型',
-    description: '用数字制造好奇心',
-    audience: '全体师生',
-    estimatedViews: 15000,
-    tone: '悬念吸引',
-    hotspot: '数据披露',
-  },
-  {
-    id: '4',
-    title: '我在南师大，毕业后我去了这些地方',
-    style: '荣耀触发型',
-    description: '用第一人称激发自豪感',
-    audience: '在校生、校友',
-    estimatedViews: 10500,
-    tone: '自豪骄傲',
-    hotspot: '校友故事',
-  },
-]
+export default function AIGenerateModal({ isOpen, onClose, initialPrompt, displayTopic }: AIGenerateModalProps) {
+  const topicLabel = displayTopic || initialPrompt.slice(0, 30).replace(/\n/g, ' ') + (initialPrompt.length > 30 ? '…' : '')
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [streamingContent, setStreamingContent] = useState('')
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
-const MOCK_HISTORICAL = [
-  {
-    id: '1',
-    title: '春分时节，随园银杏初绿',
-    publishDate: '2025年3月20日',
-    views: 8500,
-    likes: 420,
-    url: '#',
-    cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
-  },
-  {
-    id: '2',
-    title: '随园的春天，藏在每一片新叶里',
-    publishDate: '2024年3月22日',
-    views: 12300,
-    likes: 680,
-    url: '#',
-    cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
-  },
-]
+  // 已收藏的行 key 集合（title|content 拼接，防重复高亮）
+  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState(false)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-const MOCK_BENCHMARKS = [
-  {
-    id: '1',
-    school: '北京大学',
-    title: '未名湖畔春色满园，燕园最美四月天',
-    publishDate: '2周前',
-    views: 85000,
-    likes: 6200,
-    url: '#',
-    cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
-    isPopular: true,
-  },
-  {
-    id: '2',
-    school: '清华大学',
-    title: '春分｜清华园里的24小时美好时光',
-    publishDate: '1周前',
-    views: 92000,
-    likes: 7800,
-    url: '#',
-    cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
-    isPopular: true,
-  },
-  {
-    id: '3',
-    school: '复旦大学',
-    title: '复旦春色｜这是属于你的复旦春天',
-    publishDate: '3天前',
-    views: 42000,
-    likes: 3100,
-    url: '#',
-    cover: 'https://coco-default.oss-cn-shanghai.aliyuncs.com/picture.png',
-  },
-]
-
-export default function AIGenerateModal({ isOpen, onClose, topic }: AIGenerateModalProps) {
-  const [activeLayer, setActiveLayer] = useState<1 | 2 | 3>(1)
-  const [favoritedTitles, setFavoritedTitles] = useState<Set<string>>(new Set())
-
-  // 加载状态
-  const [loadingTitles, setLoadingTitles] = useState(true)
-  const [loadingHistorical, setLoadingHistorical] = useState(true)
-  const [loadingBenchmark, setLoadingBenchmark] = useState(true)
-
-  // 数据状态
-  const [titles, setTitles] = useState(MOCK_TITLES)
-  const [historicalArticles, setHistoricalArticles] = useState(MOCK_HISTORICAL)
-  const [benchmarkCases, setBenchmarkCases] = useState(MOCK_BENCHMARKS)
-
-  // 错误状态
-  const [error, setError] = useState<string | null>(null)
-
-  // 真实 AI 生成过程
-  useEffect(() => {
-    if (isOpen && topic) {
-      // 重置状态
-      setLoadingTitles(true)
-      setLoadingHistorical(true)
-      setLoadingBenchmark(true)
-      setError(null)
-
-      // 第一层：AI 标题生成
-      fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, type: 'titles' }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setTitles(data.data)
-          } else {
-            console.error('Failed to generate titles:', data.error)
-            setTitles(MOCK_TITLES) // 失败时使用备用数据
-          }
-        })
-        .catch(err => {
-          console.error('Error generating titles:', err)
-          setTitles(MOCK_TITLES) // 失败时使用备用数据
-        })
-        .finally(() => {
-          setLoadingTitles(false)
-        })
-
-      // 第二层：历史本校回溯
-      fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, type: 'historical' }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setHistoricalArticles(data.data)
-          } else {
-            console.error('Failed to search historical:', data.error)
-            setHistoricalArticles(MOCK_HISTORICAL)
-          }
-        })
-        .catch(err => {
-          console.error('Error searching historical:', err)
-          setHistoricalArticles(MOCK_HISTORICAL)
-        })
-        .finally(() => {
-          setLoadingHistorical(false)
-        })
-
-      // 第三层：名校参考对标
-      fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, type: 'benchmark' }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setBenchmarkCases(data.data)
-          } else {
-            console.error('Failed to search benchmark:', data.error)
-            setBenchmarkCases(MOCK_BENCHMARKS)
-          }
-        })
-        .catch(err => {
-          console.error('Error searching benchmark:', err)
-          setBenchmarkCases(MOCK_BENCHMARKS)
-        })
-        .finally(() => {
-          setLoadingBenchmark(false)
-        })
+  function saveRow(title: string, rowContent: string) {
+    const key = title + '|' + rowContent
+    if (savedKeys.has(key)) return
+    const item = {
+      id: crypto.randomUUID(),
+      title,
+      content: rowContent,
+      source: `AI 灵感 · ${topicLabel}`,
+      createdAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     }
-  }, [isOpen, topic])
+    const stored = localStorage.getItem('favorites')
+    let favorites = []
+    try { favorites = stored ? JSON.parse(stored) : [] } catch { favorites = [] }
+    favorites.push(item)
+    localStorage.setItem('favorites', JSON.stringify(favorites))
+    setSavedKeys(prev => new Set(prev).add(key))
+    // 显示 toast
+    setToast(true)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(false), 2500)
+  }
 
-  const handleFavorite = (id: string) => {
-    setFavoritedTitles((prev) => {
-      const newSet = new Set(prev)
-      const title = titles.find((t) => t.id === id)
+  // 打开时自动发起首次请求
+  useEffect(() => {
+    if (isOpen && initialPrompt && messages.length === 0) {
+      sendMessage(initialPrompt, [])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialPrompt])
 
-      if (newSet.has(id)) {
-        // 取消收藏
-        newSet.delete(id)
-        // 从 localStorage 移除
-        const stored = localStorage.getItem('favorites')
-        if (stored && title) {
-          try {
-            const favorites = JSON.parse(stored)
-            const filtered = favorites.filter((item: any) => item.id !== id)
-            localStorage.setItem('favorites', JSON.stringify(filtered))
-          } catch (e) {
-            console.error('Failed to remove favorite:', e)
-          }
-        }
-      } else {
-        // 添加收藏
-        newSet.add(id)
-        // 保存到 localStorage
-        if (title) {
-          const stored = localStorage.getItem('favorites')
-          let favorites = []
-          if (stored) {
-            try {
-              favorites = JSON.parse(stored)
-            } catch (e) {
-              console.error('Failed to parse favorites:', e)
-            }
-          }
-          const newFavorite = {
-            id: title.id,
-            title: title.title,
-            style: title.style,
-            source: 'AI 生成 · 标题推荐',
-            createdAt: new Date().toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          }
-          favorites.push(newFavorite)
-          localStorage.setItem('favorites', JSON.stringify(favorites))
-        }
+  // 关闭时重置
+  useEffect(() => {
+    if (!isOpen) {
+      abortRef.current?.abort()
+      setMessages([])
+      setInput('')
+      setStreamingContent('')
+      setLoading(false)
+      setSavedKeys(new Set())
+      setToast(false)
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [isOpen])
+
+  // 锁定 body 滚动
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
+  // Esc 关闭
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (isOpen) document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
+
+  // 新消息出现时滚到底部
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, streamingContent])
+
+  // textarea 自适应高度
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }, [input])
+
+  async function sendMessage(content: string, history: Message[]) {
+    if (!content.trim() || loading) return
+
+    const newMessages: Message[] = [...history, { role: 'user', content: content.trim() }]
+    setMessages(newMessages)
+    setInput('')
+    setLoading(true)
+    setStreamingContent('')
+
+    abortRef.current = new AbortController()
+
+    try {
+      const res = await fetch('/api/inspire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages }),
+        signal: abortRef.current.signal,
+      })
+
+      if (!res.ok || !res.body) {
+        const err = await res.json().catch(() => ({ error: '请求失败' }))
+        setMessages(prev => [...prev, { role: 'assistant', content: `请求失败：${err.error || '未知错误'}` }])
+        return
       }
-      return newSet
-    })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        accumulated += decoder.decode(value, { stream: true })
+        setStreamingContent(accumulated)
+      }
+
+      setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
+      setStreamingContent('')
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        setMessages(prev => [...prev, { role: 'assistant', content: '生成失败，请重试。' }])
+      }
+      setStreamingContent('')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleCopy = (title: string) => {
-    navigator.clipboard.writeText(title)
+  const handleSend = () => sendMessage(input, messages)
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
   }
 
-  const titlesWithFavorites = titles.map((title) => ({
-    ...title,
-    isFavorited: favoritedTitles.has(title.id),
-  }))
+  const handleReset = () => {
+    abortRef.current?.abort()
+    setMessages([])
+    setInput('')
+    setStreamingContent('')
+    setLoading(false)
+    setTimeout(() => sendMessage(initialPrompt, []), 50)
+  }
+
+  // 从 React children 提取纯文本
+  function extractText(children: React.ReactNode): string {
+    if (typeof children === 'string') return children
+    if (Array.isArray(children)) return children.map(extractText).join('')
+    if (typeof children === 'object' && children !== null && 'props' in (children as any)) {
+      return extractText((children as any).props?.children)
+    }
+    return ''
+  }
+
+  // 表格行收藏按钮
+  function RowSaveBtn({ title, rowContent }: { title: string; rowContent: string }) {
+    const key = title + '|' + rowContent
+    const saved = savedKeys.has(key)
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); saveRow(title, rowContent) }}
+        title={saved ? '已收藏' : '收藏此选题'}
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: '22px', height: '22px', marginRight: '6px',
+          borderRadius: '6px', border: 'none',
+          backgroundColor: saved ? '#FFFBEB' : 'transparent',
+          color: saved ? '#F59E0B' : tokens.color.text.tertiary,
+          cursor: saved ? 'default' : 'pointer',
+          flexShrink: 0, transition: 'all 0.15s',
+        }}
+        onMouseEnter={(e) => { if (!saved) { e.currentTarget.style.color = '#F59E0B'; e.currentTarget.style.backgroundColor = '#FFFBEB' } }}
+        onMouseLeave={(e) => { if (!saved) { e.currentTarget.style.color = tokens.color.text.tertiary; e.currentTarget.style.backgroundColor = 'transparent' } }}
+      >
+        <Star size={13} fill={saved ? '#F59E0B' : 'none'} />
+      </button>
+    )
+  }
+
+  const renderContent = (content: string) => (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        table: ({ children }) => (
+          <div style={{ margin: '8px 0' }}>
+            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '13px', lineHeight: 1.6, tableLayout: 'fixed' }}>
+              {children}
+            </table>
+          </div>
+        ),
+        th: ({ children }) => (
+          <th style={{ padding: '7px 12px', borderBottom: `2px solid ${tokens.color.border}`, textAlign: 'left', fontWeight: 600, color: tokens.color.text.primary, backgroundColor: tokens.color.base.gray, wordBreak: 'keep-all' }}>
+            {children}
+          </th>
+        ),
+        tr: ({ children }) => {
+          const cells = React.Children.toArray(children)
+          // 判断是否是表头行（含 th 元素）
+          const isHeader = cells.some(cell => React.isValidElement(cell) && (cell.props as any).node?.tagName === 'th')
+          if (isHeader) return <tr>{children}</tr>
+
+          // 数据行：按列名格式存 content
+          // 列顺序：选题类别 | 建议标题 | 核心策略 | 内容切入角度 | 预期共鸣点
+          const COL_NAMES = ['选题类别', '建议标题', '核心策略', '内容切入角度', '预期共鸣点']
+          const allTexts = cells
+            .filter(React.isValidElement)
+            .map(cell => extractText((cell.props as any).children).trim())
+          const title = allTexts[1] || allTexts[0] || ''
+          const rowContent = allTexts
+            .map((text, i) => `${COL_NAMES[i] || `列${i + 1}`}：${text}`)
+            .filter(line => line.split('：')[1]?.trim())
+            .join('\n')
+
+          return (
+            <tr>
+              {cells.map((cell, idx) => {
+                if (idx === 1 && React.isValidElement(cell)) {
+                  // 第二列（建议标题）前面加收藏按钮
+                  const cellChildren = (cell.props as any).children
+                  return (
+                    <td key={idx} style={{ padding: '7px 12px', borderBottom: `1px solid ${tokens.color.divider}`, color: tokens.color.text.secondary, verticalAlign: 'top', wordBreak: 'break-all' }}>
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {title && <RowSaveBtn title={title} rowContent={rowContent} />}
+                        <span>{cellChildren}</span>
+                      </span>
+                    </td>
+                  )
+                }
+                return cell
+              })}
+            </tr>
+          )
+        },
+        td: ({ children }) => (
+          <td style={{ padding: '7px 12px', borderBottom: `1px solid ${tokens.color.divider}`, color: tokens.color.text.secondary, verticalAlign: 'top', wordBreak: 'break-all' }}>
+            {children}
+          </td>
+        ),
+        p: ({ children }) => (
+          <p style={{ margin: '4px 0', lineHeight: 1.75, color: tokens.color.text.secondary, fontSize: '14px' }}>{children}</p>
+        ),
+        strong: ({ children }) => (
+          <strong style={{ color: tokens.color.text.primary, fontWeight: 600 }}>{children}</strong>
+        ),
+        h1: ({ children }) => (
+          <h1 style={{ fontSize: '16px', fontWeight: 700, margin: '14px 0 6px', color: tokens.color.text.primary }}>{children}</h1>
+        ),
+        h2: ({ children }) => (
+          <h2 style={{ fontSize: '15px', fontWeight: 600, margin: '12px 0 4px', color: tokens.color.text.primary }}>{children}</h2>
+        ),
+        h3: ({ children }) => (
+          <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '10px 0 4px', color: tokens.color.text.primary }}>{children}</h3>
+        ),
+        ul: ({ children }) => (
+          <ul style={{ paddingLeft: '20px', margin: '4px 0', color: tokens.color.text.secondary, fontSize: '14px' }}>{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol style={{ paddingLeft: '20px', margin: '4px 0', color: tokens.color.text.secondary, fontSize: '14px' }}>{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li style={{ margin: '3px 0', lineHeight: 1.65 }}>{children}</li>
+        ),
+        code: ({ children, className }) => {
+          const isBlock = !!className?.includes('language-')
+          return isBlock ? (
+            <code style={{ display: 'block', padding: '10px 14px', borderRadius: '8px', backgroundColor: tokens.color.base.gray, fontSize: '12px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: tokens.color.text.secondary }}>
+              {children}
+            </code>
+          ) : (
+            <code style={{ padding: '1px 5px', borderRadius: '4px', backgroundColor: tokens.color.base.gray, fontSize: '12px', fontFamily: 'monospace', color: tokens.color.text.secondary }}>
+              {children}
+            </code>
+          )
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  )
+
+  if (!isOpen) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="AI 灵感生成" size="lg">{/* 主题提示 */}
-      <div className="mb-6 p-3 rounded-lg" style={{ backgroundColor: 'var(--background-secondary)' }}>
-        <span className="text-xs" style={{ color: 'var(--foreground-tertiary)' }}>
-          当前主题：
-        </span>
-        <span className="text-sm font-medium ml-2" style={{ color: 'var(--foreground)' }}>
-          {topic}
-        </span>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        backgroundColor: '#F2F4F7',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: tokens.typography.fontFamily.zh,
+      }}
+    >
+      {/* 顶部导航栏 */}
+      <div
+        style={{
+          flexShrink: 0,
+          height: '56px',
+          backgroundColor: tokens.color.base.white,
+          borderBottom: `1px solid ${tokens.color.divider}`,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          gap: '16px',
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 10px',
+            borderRadius: tokens.radius.buttonSm,
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: tokens.color.text.secondary,
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = tokens.color.base.gray }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+        >
+          <ArrowLeft size={16} />
+          返回
+        </button>
+
+        <div style={{ width: '1px', height: '18px', backgroundColor: tokens.color.divider }} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: '13px', color: tokens.color.text.tertiary }}>当前主题：</span>
+          <span style={{ fontSize: '14px', fontWeight: 500, color: tokens.color.text.primary }}>{topicLabel}</span>
+        </div>
+
+        <button
+          onClick={handleReset}
+          disabled={loading}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '6px 12px',
+            borderRadius: '99px',
+            border: `1px solid ${tokens.color.border}`,
+            backgroundColor: 'transparent',
+            color: tokens.color.text.tertiary,
+            fontSize: '13px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.5 : 1,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.borderColor = tokens.color.accent; e.currentTarget.style.color = tokens.color.accent } }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.color.border; e.currentTarget.style.color = tokens.color.text.tertiary }}
+        >
+          <RotateCcw size={13} />
+          重新生成
+        </button>
       </div>
 
-      {/* 三层垂直排列展示 */}
-      <div className="space-y-6">
-        {/* 第一层：AI 标题推荐 */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: 'var(--primary)' }}>
-                1
-              </span>
-              AI 标题推荐
-              {loadingTitles && (
-                <span className="text-xs font-normal" style={{ color: 'var(--foreground-tertiary)' }}>
-                  生成中...
-                </span>
+      {/* 收藏成功 Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '72px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 300,
+          backgroundColor: '#1D1D1F', color: '#fff',
+          padding: '10px 20px', borderRadius: '99px',
+          fontSize: '13px', fontWeight: 500,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          whiteSpace: 'nowrap', pointerEvents: 'none',
+          animation: 'toast-in 0.2s ease',
+        }}>
+          已收藏，可在「创作」中查看
+          <style>{`@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(-6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
+        </div>
+      )}
+
+      {/* 对话内容区 —— flex:1 + overflow-y:auto，不会被输入框遮挡 */}
+      <div
+        ref={scrollAreaRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '32px 0 24px',
+        }}
+      >
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {messages.map((msg, i) => (
+            <div key={i}>
+              {msg.role === 'user' ? (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div
+                    style={{
+                      maxWidth: '72%',
+                      padding: '10px 14px',
+                      borderRadius: '16px 16px 4px 16px',
+                      backgroundColor: tokens.color.accent,
+                      color: '#fff',
+                      fontSize: '14px',
+                      lineHeight: 1.65,
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    borderRadius: '4px 16px 16px 16px',
+                    backgroundColor: tokens.color.base.white,
+                    border: `1px solid ${tokens.color.border}`,
+                    boxShadow: tokens.shadow.diffuse,
+                    padding: '16px 20px',
+                  }}
+                >
+                  {renderContent(msg.content)}
+                </div>
               )}
-            </h3>
-            {/* 三维策略说明 */}
-            {!loadingTitles && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FCE7F3', color: '#9D174D', fontSize: '11px' }}>❤️ 动心</span>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#D1FAE5', color: '#064E3B', fontSize: '11px' }}>📌 有用</span>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#78350F', fontSize: '11px' }}>🎯 一笑</span>
-              </div>
-            )}
-          </div>
-          <AITitleSuggestions
-            titles={titlesWithFavorites}
-            onFavorite={handleFavorite}
-            onCopy={handleCopy}
-            loading={loadingTitles}
-          />
-        </div>
+            </div>
+          ))}
 
-        {/* 第二层：历史本校回溯 */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: 'var(--primary)' }}>
-              2
-            </span>
-            历史本校回溯
-            {loadingHistorical && (
-              <span className="text-xs font-normal" style={{ color: 'var(--foreground-tertiary)' }}>
-                查询中...
-              </span>
-            )}
-          </h3>
-          <HistoricalReview articles={historicalArticles} topic={topic} loading={loadingHistorical} />
-        </div>
+          {/* 流式输出 */}
+          {(loading || streamingContent) && (
+            <div
+              style={{
+                padding: '16px 20px',
+                borderRadius: '4px 16px 16px 16px',
+                backgroundColor: tokens.color.base.white,
+                border: `1px solid ${tokens.color.border}`,
+                boxShadow: tokens.shadow.diffuse,
+              }}
+            >
+              {streamingContent ? renderContent(streamingContent) : (
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', padding: '4px 0' }}>
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        backgroundColor: tokens.color.text.tertiary,
+                        display: 'inline-block',
+                        animation: 'inspire-bounce 1.2s ease-in-out infinite',
+                        animationDelay: `${i * 0.2}s`,
+                      }}
+                    />
+                  ))}
+                  <style>{`
+                    @keyframes inspire-bounce {
+                      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+                      40% { opacity: 1; transform: scale(1); }
+                    }
+                  `}</style>
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* 第三层：名校参考对标 */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: 'var(--primary)' }}>
-              3
-            </span>
-            名校参考对标
-            {loadingBenchmark && (
-              <span className="text-xs font-normal" style={{ color: 'var(--foreground-tertiary)' }}>
-                分析中...
-              </span>
-            )}
-          </h3>
-          <BenchmarkCases articles={benchmarkCases} topic={topic} loading={loadingBenchmark} />
+          <div ref={bottomRef} />
         </div>
       </div>
-    </Modal>
+
+      {/* 底部输入栏 —— flexShrink:0，始终贴底，不覆盖对话区 */}
+      <div
+        style={{
+          flexShrink: 0,
+          backgroundColor: tokens.color.base.white,
+          borderTop: `1px solid ${tokens.color.divider}`,
+          padding: '16px 24px',
+        }}
+      >
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-end',
+              padding: '10px 14px',
+              borderRadius: '14px',
+              border: `1px solid ${tokens.color.border}`,
+              backgroundColor: tokens.color.base.white,
+              boxShadow: tokens.shadow.diffuse,
+              transition: 'border-color 0.15s',
+            }}
+            onFocusCapture={(e) => { e.currentTarget.style.borderColor = tokens.color.accent }}
+            onBlurCapture={(e) => { e.currentTarget.style.borderColor = tokens.color.border }}
+          >
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="继续追问或修改要求……Enter 发送，Shift+Enter 换行"
+              rows={1}
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: tokens.color.text.primary,
+                fontFamily: tokens.typography.fontFamily.zh,
+                backgroundColor: 'transparent',
+                minHeight: '24px',
+                maxHeight: '120px',
+                overflowY: 'auto',
+              }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || loading}
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '99px',
+                border: 'none',
+                backgroundColor: !input.trim() || loading ? tokens.color.base.gray : tokens.color.accent,
+                color: !input.trim() || loading ? tokens.color.text.tertiary : '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: !input.trim() || loading ? 'not-allowed' : 'pointer',
+                flexShrink: 0,
+                transition: 'background-color 0.15s',
+              }}
+            >
+              <Send size={15} />
+            </button>
+          </div>
+          <p style={{ fontSize: '11px', color: tokens.color.text.tertiary, marginTop: '8px', textAlign: 'center' }}>
+            由 DeepSeek 驱动 · 遵循「动心·有用·一笑」选题框架
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

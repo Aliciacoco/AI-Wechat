@@ -153,7 +153,7 @@ export default function SuperSearch({
               gap: '5px',
               transition: 'background-color 0.15s, opacity 0.15s',
             }}
-            onMouseEnter={(e) => { if (query.trim()) e.currentTarget.style.backgroundColor = '#0062C4' }}
+            onMouseEnter={(e) => { if (query.trim()) e.currentTarget.style.backgroundColor = '#0B7FCC' }}
             onMouseLeave={(e) => { if (query.trim()) e.currentTarget.style.backgroundColor = tokens.color.accent }}
           >
             <Sparkles size={12} />

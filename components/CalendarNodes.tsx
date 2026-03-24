@@ -59,7 +59,7 @@ export default function CalendarNodes({ nodes, onGenerateIdea }: CalendarNodesPr
             >
               {/* 时间轴圆点 */}
               <div className="absolute left-0 top-3 w-6 h-6 rounded-full flex items-center justify-center z-10 bg-white">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cfg.text }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#D1D1D6' }} />
               </div>
 
               {/* 卡片 */}

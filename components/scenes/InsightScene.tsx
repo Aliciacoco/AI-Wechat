@@ -11,6 +11,7 @@ import { tokens } from '@/lib/design-tokens'
 import { Divider } from '@/components/ui'
 import { SCHOOLS, BENCHMARK_ARTICLES, FOLLOWED_SCHOOLS_ARTICLES, OUR_SCHOOL_ARTICLES } from '@/data/schools'
 import { articleAnalysisCache } from '@/lib/article-analysis-cache'
+import { buildInsightReferencePrompt } from '@/lib/inspire-prompts'
 
 // 关注高校
 const FOLLOWED_SCHOOLS = [
@@ -96,7 +97,7 @@ function AvatarBtn({ id, name, shortName, logo, selected, onClick }: AvatarBtnPr
         }}
       >
         {logo ? (
-          <Image src={logo} alt={name} fill className="object-cover" />
+          <Image src={logo} alt={name} fill sizes="40px" className="object-cover" />
         ) : (
           <div style={{
             width: '100%', height: '100%',
@@ -289,7 +290,14 @@ export default function InsightScene() {
   const [error, setError] = useState('')
 
   const [showAIModal, setShowAIModal] = useState(false)
-  const [aiModalTopic, setAIModalTopic] = useState('')
+  const [aiModalPrompt, setAIModalPrompt] = useState('')
+  const [aiModalDisplay, setAIModalDisplay] = useState('')
+
+  function openInsightModal(refSchool: string, refTitle: string) {
+    setAIModalPrompt(buildInsightReferencePrompt(refSchool, refTitle))
+    setAIModalDisplay(`参考「${refSchool}」· ${refTitle.slice(0, 15)}${refTitle.length > 15 ? '…' : ''}`)
+    setShowAIModal(true)
+  }
 
   // AI分析缓存 — 触发一次批量请求，结果缓存7天
   const [analysisCache, setAnalysisCache] = useState<Map<string, string[]>>(
@@ -344,8 +352,7 @@ export default function InsightScene() {
                           articles={schoolData.articles}
                           analysisCache={new Map(schoolData.articles.map(a => [a.id, analysisCache.get(`bench:${a.id}`) ?? []]))}
                           onGenerateIdea={(title) => {
-                            setAIModalTopic(title)
-                            setShowAIModal(true)
+                            openInsightModal(schoolData.school, title)
                           }}
                         />
                       ))}
@@ -357,14 +364,16 @@ export default function InsightScene() {
                     const articles = getCurrentArticles()
                     const prefix = isFollowed ? 'followed' : 'our'
                     const prefixedCache = new Map(articles.map(a => [a.id, analysisCache.get(`${prefix}:${a.id}`) ?? []]))
+                    const schoolName = isFollowed
+                      ? (FOLLOWED_SCHOOLS.find(s => s.id === selectedId)?.name ?? selectedId)
+                      : (OUR_SCHOOLS.find(s => s.id === selectedId)?.name ?? selectedId)
                     return (
                       <ArticleWaterfall
                         articles={articles}
                         showHighViewsTag={true}
                         analysisCache={prefixedCache}
                         onGenerateIdea={(title) => {
-                          setAIModalTopic(title)
-                          setShowAIModal(true)
+                          openInsightModal(schoolName, title)
                         }}
                       />
                     )
@@ -399,7 +408,8 @@ export default function InsightScene() {
       <AIGenerateModal
         isOpen={showAIModal}
         onClose={() => setShowAIModal(false)}
-        topic={aiModalTopic}
+        initialPrompt={aiModalPrompt}
+        displayTopic={aiModalDisplay}
       />
     </div>
   )

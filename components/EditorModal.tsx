@@ -1,58 +1,56 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Sparkles, Loader2 } from 'lucide-react'
 import { tokens } from '@/lib/design-tokens'
 
 interface EditorModalProps {
   isOpen: boolean
   onClose: () => void
   title: string
+  inspireContent?: string  // 格式：「字段名：值\n字段名：值…」
 }
 
-const DEFAULT_OUTLINE = `一、引言
-• 话题背景与当下时节的关联
-• 引出核心角度，吸引读者继续阅读
-
-二、主体内容
-• 核心事实/故事/观点（2-3个层次展开）
-• 结合南师大实际场景或师生视角
-• 数据、引用或案例支撑
-
-三、情感共鸣
-• 挖掘与读者的情感连接点
-• 南师大特有的文化底蕴呼应
-
-四、结尾
-• 行动引导或互动话题
-• 金句收尾，与开篇呼应`
-
-export default function EditorModal({ isOpen, onClose, title }: EditorModalProps) {
-  const [outline, setOutline] = useState(DEFAULT_OUTLINE)
-  const [body, setBody] = useState('')
+export default function EditorModal({ isOpen, onClose, title, inspireContent }: EditorModalProps) {
+  const [outline, setOutline] = useState('')
   const [generating, setGenerating] = useState(false)
-  const [outlineCollapsed, setOutlineCollapsed] = useState(false)
 
-  const handleGenerateBody = async () => {
-    if (!outline.trim()) return
+  // 解析 content 为字段数组 [{label, value}]
+  const fields = (inspireContent || '')
+    .split('\n')
+    .map(line => {
+      const colon = line.indexOf('：')
+      if (colon === -1) return null
+      return { label: line.slice(0, colon).trim(), value: line.slice(colon + 1).trim() }
+    })
+    .filter(Boolean) as { label: string; value: string }[]
+
+  const handleGenerateOutline = async () => {
     setGenerating(true)
-    setBody('')
-
+    setOutline('')
     try {
-      const response = await fetch('/api/generate', {
+      const res = await fetch('/api/inspire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: title, outline, type: 'body' }),
+        body: JSON.stringify({
+          messages: [{
+            role: 'user',
+            content: `请为以下选题生成一篇公众号文章大纲：\n\n标题：${title}\n${inspireContent || ''}\n\n要求：大纲分 4-5 个章节，每节 2-3 个要点，结合南师大校园场景，语言简洁。`,
+          }],
+        }),
       })
-
-      const result = await response.json()
-      if (result.success && result.content) {
-        setBody(result.content)
-      } else {
-        setBody('生成失败，请重试。\n\n错误：' + (result.error || '未知错误'))
+      if (!res.ok || !res.body) { setOutline('生成失败，请重试。'); return }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        accumulated += decoder.decode(value, { stream: true })
+        setOutline(accumulated)
       }
     } catch {
-      setBody('请求失败，请检查网络后重试。')
+      setOutline('请求失败，请检查网络后重试。')
     } finally {
       setGenerating(false)
     }
@@ -117,116 +115,93 @@ export default function EditorModal({ isOpen, onClose, title }: EditorModalProps
         {/* 内容区（滚动） */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
 
-          {/* 大纲区 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '10px', cursor: 'pointer',
-              }}
-              onClick={() => setOutlineCollapsed(!outlineCollapsed)}
-            >
-              <span style={{
-                fontSize: '13px', fontWeight: tokens.typography.weight.semibold,
-                color: tokens.color.text.secondary, textTransform: 'uppercase', letterSpacing: '0.04em',
-              }}>
-                推荐大纲
-              </span>
-              <div style={{ color: tokens.color.text.tertiary }}>
-                {outlineCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+          {/* 选题信息表格 */}
+          {fields.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '12px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                选题信息
               </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  {fields.map(({ label, value }) => (
+                    <tr key={label}>
+                      <td style={{
+                        width: '110px', padding: '9px 12px',
+                        borderBottom: `1px solid ${tokens.color.divider}`,
+                        backgroundColor: tokens.color.base.gray,
+                        color: tokens.color.text.tertiary,
+                        fontWeight: tokens.typography.weight.medium,
+                        verticalAlign: 'top', whiteSpace: 'nowrap',
+                        borderRadius: '0',
+                      }}>
+                        {label}
+                      </td>
+                      <td style={{
+                        padding: '9px 14px',
+                        borderBottom: `1px solid ${tokens.color.divider}`,
+                        color: tokens.color.text.primary,
+                        lineHeight: 1.65,
+                        verticalAlign: 'top',
+                      }}>
+                        {value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          )}
 
-            {!outlineCollapsed && (
-              <textarea
-                value={outline}
-                onChange={(e) => setOutline(e.target.value)}
-                rows={10}
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  fontSize: '13px',
-                  lineHeight: '1.7',
-                  borderRadius: tokens.radius.buttonSm,
-                  border: `1px solid ${tokens.color.border}`,
-                  backgroundColor: tokens.color.base.gray,
-                  color: tokens.color.text.primary,
-                  fontFamily: tokens.typography.fontFamily.zh,
-                  resize: 'vertical',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.15s',
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = tokens.color.accent }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = tokens.color.border }}
-              />
-            )}
+          {/* 生成大纲按钮 */}
+          <button
+            onClick={handleGenerateOutline}
+            disabled={generating}
+            style={{
+              height: '36px', padding: '0 20px',
+              borderRadius: tokens.radius.button,
+              border: 'none',
+              backgroundColor: generating ? tokens.color.text.tertiary : tokens.color.accent,
+              color: tokens.color.base.white,
+              fontSize: '13px', fontWeight: tokens.typography.weight.medium,
+              fontFamily: tokens.typography.fontFamily.zh,
+              cursor: generating ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              marginBottom: '16px',
+              transition: 'background-color 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!generating) e.currentTarget.style.backgroundColor = '#0B7FCC' }}
+            onMouseLeave={(e) => { if (!generating) e.currentTarget.style.backgroundColor = generating ? tokens.color.text.tertiary : tokens.color.accent }}
+          >
+            {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {generating ? '大纲生成中…' : '生成大纲'}
+          </button>
 
-            {/* 生成正文按钮 */}
-            <button
-              onClick={handleGenerateBody}
-              disabled={generating}
-              style={{
-                marginTop: '12px',
-                height: '36px',
-                padding: '0 20px',
-                borderRadius: tokens.radius.button,
-                border: 'none',
-                backgroundColor: generating ? tokens.color.text.tertiary : tokens.color.accent,
-                color: tokens.color.base.white,
-                fontSize: '13px',
-                fontWeight: tokens.typography.weight.medium,
-                fontFamily: tokens.typography.fontFamily.zh,
-                cursor: generating ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                transition: 'background-color 0.15s',
-              }}
-              onMouseEnter={(e) => { if (!generating) e.currentTarget.style.backgroundColor = '#0062C4' }}
-              onMouseLeave={(e) => { if (!generating) e.currentTarget.style.backgroundColor = tokens.color.accent }}
-            >
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-              {generating ? '正文生成中...' : '生成正文'}
-            </button>
-          </div>
-
-          {/* 正文区 */}
-          {(body || generating) && (
+          {/* 大纲区 */}
+          {(outline || generating) && (
             <div>
-              <div style={{
-                fontSize: '13px', fontWeight: tokens.typography.weight.semibold,
-                color: tokens.color.text.secondary, textTransform: 'uppercase',
-                letterSpacing: '0.04em', marginBottom: '10px',
-              }}>
-                正文
+              <div style={{ fontSize: '12px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                文章大纲
               </div>
-              {generating && !body ? (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '32px 16px',
-                  color: tokens.color.text.tertiary, fontSize: '13px',
-                }}>
-                  <Loader2 size={16} className="animate-spin" />
-                  AI 正在撰写正文...
+              {generating && !outline ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '24px 16px', color: tokens.color.text.tertiary, fontSize: '13px' }}>
+                  <Loader2 size={15} className="animate-spin" />
+                  AI 正在生成大纲…
                 </div>
               ) : (
                 <textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={16}
+                  value={outline}
+                  onChange={(e) => setOutline(e.target.value)}
+                  rows={14}
                   style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    fontSize: '14px',
-                    lineHeight: '1.85',
+                    width: '100%', padding: '14px 16px',
+                    fontSize: '13px', lineHeight: '1.8',
                     borderRadius: tokens.radius.buttonSm,
                     border: `1px solid ${tokens.color.border}`,
-                    backgroundColor: tokens.color.base.white,
+                    backgroundColor: tokens.color.base.gray,
                     color: tokens.color.text.primary,
                     fontFamily: tokens.typography.fontFamily.zh,
-                    resize: 'vertical',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s',
+                    resize: 'vertical', outline: 'none',
+                    boxSizing: 'border-box', transition: 'border-color 0.15s',
                   }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = tokens.color.accent }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = tokens.color.border }}

@@ -213,7 +213,7 @@ function AnalysisTag({ article, onGenerateIdea, cachedReasons }: AnalysisTagProp
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
                 transition: 'background-color 0.15s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0062C4' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0B7FCC' }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = tokens.color.accent }}
             >
               <Sparkles size={11} />
