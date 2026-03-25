@@ -71,6 +71,7 @@ export default function TopicsScene() {
           return true
         }
         if (node.schoolOnly && node.schoolOnly !== currentSchool.name) return false
+        if (node.tier985Only && currentSchool.tier !== '985') return false
         if (currentSchool.incompatibleNodeIds?.includes(node.id)) return false
         return true
       })

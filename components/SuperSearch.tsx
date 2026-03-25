@@ -325,6 +325,7 @@ function PickerPanel({ sel, activeNodeTable, onNodeTableChange, onUpdate, global
       return true
     }
     if (node.schoolOnly && node.schoolOnly !== filterSchool.name) return false
+    if (node.tier985Only && filterSchool.tier !== '985') return false
     if (filterSchool.incompatibleNodeIds?.includes(node.id)) return false
     return true
   })

@@ -1,7 +1,7 @@
 'use client'
 
 import { Eye, ThumbsUp, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { tokens } from '@/lib/design-tokens'
 
@@ -135,8 +135,12 @@ interface AnalysisTagProps {
 
 function AnalysisTag({ article, onGenerateIdea, cachedReasons }: AnalysisTagProps) {
   const [visible, setVisible] = useState(false)
-  const reasons = cachedReasons?.length ? cachedReasons : getAnalysisReasons(article)
-  const label = getTagLabel(article, cachedReasons)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const effectiveCachedReasons = mounted ? cachedReasons : null
+  const reasons = effectiveCachedReasons?.length ? effectiveCachedReasons : getAnalysisReasons(article)
+  const label = getTagLabel(article, effectiveCachedReasons)
 
   return (
     <div
