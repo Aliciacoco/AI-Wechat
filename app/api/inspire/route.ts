@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
-import { TOPIC_STRATEGY_PROMPT_TEXT } from '@/lib/prompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -11,6 +10,8 @@ const client = new OpenAI({
   timeout: 55000,
   maxRetries: 0,
 })
+
+const SYSTEM_PROMPT = '你是一位专业的高校新媒体内容策划，擅长洞察用户需求、创意破圈。请严格遵循用户消息中的规范和要求进行创作。'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
     const stream = await client.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: TOPIC_STRATEGY_PROMPT_TEXT },
+        { role: 'system', content: SYSTEM_PROMPT },
         ...messages,
       ],
       temperature: 0.8,

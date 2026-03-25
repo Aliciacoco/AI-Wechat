@@ -1,6 +1,5 @@
 import OpenAI from 'openai'
 import { getRelevantKnowledge, formatKnowledgeForPrompt } from './knowledge-base'
-import { TOPIC_STRATEGY_PROMPT_TEXT } from './prompts'
 
 // 检查 DeepSeek API Key
 if (!process.env.DEEPSEEK_API_KEY) {

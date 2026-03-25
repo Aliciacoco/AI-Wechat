@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { Flame } from 'lucide-react'
 import OutlineSidebar from '@/components/OutlineSidebar'
@@ -10,21 +10,17 @@ import AIGenerateModal from '@/components/AIGenerateModal'
 import { tokens } from '@/lib/design-tokens'
 import { Divider } from '@/components/ui'
 import { SCHOOLS, BENCHMARK_ARTICLES, FOLLOWED_SCHOOLS_ARTICLES, OUR_SCHOOL_ARTICLES } from '@/data/schools'
+import { SCHOOL_PROFILES } from '@/data/school-profiles'
 import { articleAnalysisCache } from '@/lib/article-analysis-cache'
-import { buildInsightReferencePrompt } from '@/lib/inspire-prompts'
+import { buildInsightReferencePrompt } from '@/lib/prompt-builder'
+import { useScene } from '@/components/SceneProvider'
 
-// 关注高校
+// 关注高校（固定）
 const FOLLOWED_SCHOOLS = [
   { id: 'ecnu', name: SCHOOLS['华东师大'].name, shortName: SCHOOLS['华东师大'].shortName, logo: SCHOOLS['华东师大'].logo },
   { id: 'bnu', name: SCHOOLS['北京师大'].name, shortName: SCHOOLS['北京师大'].shortName, logo: SCHOOLS['北京师大'].logo },
   { id: 'nanjing', name: SCHOOLS['南京大学'].name, shortName: SCHOOLS['南京大学'].shortName, logo: SCHOOLS['南京大学'].logo },
   { id: 'suzhou', name: SCHOOLS['苏州大学'].name, shortName: SCHOOLS['苏州大学'].shortName, logo: SCHOOLS['苏州大学'].logo },
-]
-
-// 本校账号
-const OUR_SCHOOLS = [
-  { id: 'njnu-main', name: SCHOOLS['南京师大'].name, shortName: SCHOOLS['南京师大'].shortName, logo: SCHOOLS['南京师大'].logo },
-  { id: 'njnu-zs', name: SCHOOLS['南师招生'].name, shortName: SCHOOLS['南师招生'].shortName, logo: SCHOOLS['南师招生'].logo },
 ]
 
 const FOLLOWED_ARTICLES_MAP: Record<string, ArticleCard[]> = {
@@ -42,17 +38,7 @@ const FOLLOWED_ARTICLES_MAP: Record<string, ArticleCard[]> = {
   })) || [],
 }
 
-const OUR_SCHOOL_ARTICLES_MAP: Record<string, ArticleCard[]> = {
-  'njnu-main': OUR_SCHOOL_ARTICLES.find(s => s.school === '南京师大')?.articles.map(a => ({
-    id: a.id, cover: a.cover, title: a.title, publishTime: a.date, views: a.views, likes: a.likes, url: a.url,
-  })) || [],
-  'njnu-zs': OUR_SCHOOL_ARTICLES.find(s => s.school === '南师招生')?.articles.map(a => ({
-    id: a.id, cover: a.cover, title: a.title, publishTime: a.date, views: a.views, likes: a.likes, url: a.url,
-  })) || [],
-}
-
 const FOLLOWED_IDS = new Set(FOLLOWED_SCHOOLS.map(s => s.id))
-const OUR_IDS = new Set(OUR_SCHOOLS.map(s => s.id))
 
 // ── Avatar 按钮 ────────────────────────────────────────────────
 interface AvatarBtnProps {
@@ -125,12 +111,20 @@ function AvatarBtn({ id, name, shortName, logo, selected, onClick }: AvatarBtnPr
 }
 
 // ── 导航栏 ─────────────────────────────────────────────────────
+interface OurSchoolEntry {
+  id: string
+  name: string
+  shortName: string
+  logo: string
+}
+
 interface BenchmarkNavProps {
   selectedId: string
   onSelect: (id: string) => void
+  ourSchools: OurSchoolEntry[]
 }
 
-function BenchmarkNav({ selectedId, onSelect }: BenchmarkNavProps) {
+function BenchmarkNav({ selectedId, onSelect, ourSchools }: BenchmarkNavProps) {
   return (
     <div>
       {/* Dock 容器 */}
@@ -246,7 +240,8 @@ function BenchmarkNav({ selectedId, onSelect }: BenchmarkNavProps) {
           </div>
         </div>
 
-        {/* 右侧：本校账号头像 */}
+        {/* 右侧：本校账号头像（仅在有账号时显示） */}
+        {ourSchools.length > 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'flex-end',
@@ -261,7 +256,7 @@ function BenchmarkNav({ selectedId, onSelect }: BenchmarkNavProps) {
             marginRight: '4px',
             alignSelf: 'center',
           }} />
-          {OUR_SCHOOLS.map(school => (
+          {ourSchools.map(school => (
             <AvatarBtn
               key={school.id}
               {...school}
@@ -270,6 +265,7 @@ function BenchmarkNav({ selectedId, onSelect }: BenchmarkNavProps) {
             />
           ))}
         </div>
+        )}
       </div>
       <Divider style={{ marginTop: '16px' }} />
     </div>
@@ -293,8 +289,41 @@ export default function InsightScene() {
   const [aiModalPrompt, setAIModalPrompt] = useState('')
   const [aiModalDisplay, setAIModalDisplay] = useState('')
 
+  // 当前学校上下文
+  const { currentSchool } = useScene()
+
+  // 本校账号：无学校时为空；有学校时取该学校的账号
+  const ourSchools = useMemo(() => {
+    if (!currentSchool) return []
+    return currentSchool.accounts.map(account => {
+        const schoolInfo = SCHOOLS[account.schoolKey]
+        if (!schoolInfo) return null
+        return {
+          id: account.id,
+          name: schoolInfo.name,
+          shortName: schoolInfo.shortName,
+          logo: schoolInfo.logo,
+        }
+      }).filter(Boolean) as { id: string; name: string; shortName: string; logo: string }[]
+  }, [currentSchool])
+
+  // 本校文章 Map：无学校时为空
+  const ourSchoolArticlesMap = useMemo<Record<string, ArticleCard[]>>(() => {
+    if (!currentSchool) return {}
+    const map: Record<string, ArticleCard[]> = {}
+    for (const account of currentSchool.accounts) {
+      const schoolArticleData = OUR_SCHOOL_ARTICLES.find(s => s.school === account.schoolKey)
+      map[account.id] = schoolArticleData?.articles.map(a => ({
+        id: a.id, cover: a.cover, title: a.title, publishTime: a.date, views: a.views, likes: a.likes, url: a.url,
+      })) || []
+    }
+    return map
+  }, [currentSchool])
+
+  const ourIds = useMemo(() => new Set(ourSchools.map(s => s.id)), [ourSchools])
+
   function openInsightModal(refSchool: string, refTitle: string) {
-    setAIModalPrompt(buildInsightReferencePrompt(refSchool, refTitle))
+    setAIModalPrompt(buildInsightReferencePrompt(refSchool, refTitle, currentSchool))
     setAIModalDisplay(`参考「${refSchool}」· ${refTitle.slice(0, 15)}${refTitle.length > 15 ? '…' : ''}`)
     setShowAIModal(true)
   }
@@ -319,13 +348,13 @@ export default function InsightScene() {
 
   const getCurrentArticles = (): ArticleCard[] => {
     if (FOLLOWED_IDS.has(selectedId)) return FOLLOWED_ARTICLES_MAP[selectedId] || []
-    if (OUR_IDS.has(selectedId)) return OUR_SCHOOL_ARTICLES_MAP[selectedId] || []
+    if (ourIds.has(selectedId)) return ourSchoolArticlesMap[selectedId] || []
     return []
   }
 
   const isBenchmark = selectedId === 'benchmark'
   const isFollowed = FOLLOWED_IDS.has(selectedId)
-  const isOurSchool = OUR_IDS.has(selectedId)
+  const isOurSchool = ourIds.has(selectedId)
 
   return (
     <div className="min-h-screen">
@@ -338,7 +367,7 @@ export default function InsightScene() {
                 className="bg-white rounded-xl border p-6"
                 style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-sm)' }}
               >
-                <BenchmarkNav selectedId={selectedId} onSelect={setSelectedId} />
+                <BenchmarkNav selectedId={selectedId} onSelect={setSelectedId} ourSchools={ourSchools} />
 
                 <div className="mt-6">
                   {/* 标杆案例 */}
@@ -366,7 +395,7 @@ export default function InsightScene() {
                     const prefixedCache = new Map(articles.map(a => [a.id, analysisCache.get(`${prefix}:${a.id}`) ?? []]))
                     const schoolName = isFollowed
                       ? (FOLLOWED_SCHOOLS.find(s => s.id === selectedId)?.name ?? selectedId)
-                      : (OUR_SCHOOLS.find(s => s.id === selectedId)?.name ?? selectedId)
+                      : (ourSchools.find(s => s.id === selectedId)?.name ?? selectedId)
                     return (
                       <ArticleWaterfall
                         articles={articles}
