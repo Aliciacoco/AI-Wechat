@@ -37,7 +37,7 @@ export default function CalendarNodes({ nodes, onGenerateIdea }: CalendarNodesPr
   }
 
   return (
-    <div className="relative">
+    <div className="relative calendar-nodes-scroll" style={{ maxHeight: '520px', overflowY: 'auto', paddingRight: '2px' }}>
       {/* 时间轴线 */}
       <div
         className="absolute left-[11px] top-4 bottom-4 w-0.5"
@@ -95,10 +95,6 @@ export default function CalendarNodes({ nodes, onGenerateIdea }: CalendarNodesPr
                   <h3 className="text-sm font-semibold mt-1.5 leading-snug" style={{ color: 'var(--foreground)' }}>
                     {node.title}
                   </h3>
-
-                  <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: 'var(--foreground-secondary)' }}>
-                    {node.description}
-                  </p>
 
                   {/* 悬停时展示生成按钮 */}
                   <div

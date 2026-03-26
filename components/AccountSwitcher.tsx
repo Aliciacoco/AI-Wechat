@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
+import { tokens } from '@/lib/design-tokens'
+import { Divider } from '@/components/ui'
 
 const ACCOUNTS = [
   { id: 'njnu-main', label: '南京师范大学', sub: '官方主号', role: 'own' },
@@ -20,41 +22,85 @@ export default function AccountSwitcher({ accountId, onChange }: Props) {
   const current = ACCOUNTS.find(a => a.id === accountId) || ACCOUNTS[0]
 
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
+      {/* 触发按钮 */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm hover:border-green-400 transition-colors"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          backgroundColor: tokens.color.base.white,
+          border: `1px solid ${tokens.color.border}`,
+          borderRadius: tokens.radius.buttonSm,
+          padding: '6px 12px',
+          fontSize: '13px',
+          fontFamily: tokens.typography.fontFamily.zh,
+          cursor: 'pointer',
+          boxShadow: tokens.shadow.diffuse,
+          transition: 'border-color 0.15s',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.color.accent }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = open ? tokens.color.accent : tokens.color.border }}
       >
-        <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-        <span className="font-medium text-gray-800">{current.label}</span>
-        <span className="text-gray-400 text-xs">{current.sub}</span>
-        <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34C759', flexShrink: 0 }} />
+        <span style={{ fontWeight: tokens.typography.weight.medium, color: tokens.color.text.primary }}>{current.label}</span>
+        <span style={{ color: tokens.color.text.tertiary, fontSize: '12px' }}>{current.sub}</span>
+        <ChevronDown size={13} style={{ color: tokens.color.text.tertiary, transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
       </button>
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-20 min-w-56 overflow-hidden">
-            <div className="px-3 pt-2 pb-1 text-xs text-gray-400 font-medium">我方账号</div>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setOpen(false)} />
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 20,
+            backgroundColor: tokens.color.base.white,
+            border: `1px solid ${tokens.color.border}`,
+            borderRadius: tokens.radius.card,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            minWidth: '220px',
+            overflow: 'hidden',
+          }}>
+            <p style={{ padding: '8px 12px 4px', fontSize: '11px', color: tokens.color.text.tertiary, fontWeight: tokens.typography.weight.semibold, letterSpacing: tokens.typography.letterSpacing.label }}>
+              我方账号
+            </p>
             {ACCOUNTS.filter(a => a.role === 'own').map(a => (
               <button key={a.id} onClick={() => { onChange(a.id); setOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-green-50 transition-colors text-left">
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-800">{a.label}</div>
-                  <div className="text-xs text-gray-400">{a.sub}</div>
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '8px 12px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  backgroundColor: accountId === a.id ? '#EBF4FF' : 'transparent',
+                  transition: 'background-color 0.1s',
+                  fontFamily: tokens.typography.fontFamily.zh,
+                }}
+                onMouseEnter={(e) => { if (accountId !== a.id) e.currentTarget.style.backgroundColor = tokens.color.base.gray }}
+                onMouseLeave={(e) => { if (accountId !== a.id) e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '13px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.primary }}>{a.label}</p>
+                  <p style={{ fontSize: '11px', color: tokens.color.text.tertiary }}>{a.sub}</p>
                 </div>
-                {accountId === a.id && <Check size={14} className="text-green-500" />}
+                {accountId === a.id && <Check size={13} style={{ color: tokens.color.accent }} />}
               </button>
             ))}
-            <div className="px-3 pt-2 pb-1 text-xs text-gray-400 font-medium border-t border-gray-100 mt-1">竞品参考</div>
+            <Divider style={{ margin: '4px 0' }} />
+            <p style={{ padding: '4px 12px', fontSize: '11px', color: tokens.color.text.tertiary, fontWeight: tokens.typography.weight.semibold, letterSpacing: tokens.typography.letterSpacing.label }}>
+              竞品参考
+            </p>
             {ACCOUNTS.filter(a => a.role === 'competitor').map(a => (
               <button key={a.id} onClick={() => { onChange(a.id); setOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-600">{a.label}</div>
-                  <div className="text-xs text-gray-400">{a.sub}</div>
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '8px 12px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  backgroundColor: 'transparent', transition: 'background-color 0.1s',
+                  fontFamily: tokens.typography.fontFamily.zh,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = tokens.color.base.gray }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '13px', color: tokens.color.text.secondary }}>{a.label}</p>
+                  <p style={{ fontSize: '11px', color: tokens.color.text.tertiary }}>{a.sub}</p>
                 </div>
-                {accountId === a.id && <Check size={14} className="text-green-500" />}
+                {accountId === a.id && <Check size={13} style={{ color: tokens.color.accent }} />}
               </button>
             ))}
           </div>

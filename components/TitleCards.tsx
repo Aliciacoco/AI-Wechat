@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
+import { Card, Badge } from '@/components/ui'
+import { tokens } from '@/lib/design-tokens'
 
 interface TitleItem {
   title: string
@@ -12,17 +14,17 @@ interface TitleItem {
 
 interface Props { titles: TitleItem[] }
 
-const typeColors: Record<string, string> = {
-  '情感共鸣型': 'bg-pink-50 text-pink-600 border-pink-100',
-  '荣耀触发型': 'bg-amber-50 text-amber-600 border-amber-100',
-  '悬念好奇型': 'bg-purple-50 text-purple-600 border-purple-100',
-  '信息实用型': 'bg-blue-50 text-blue-600 border-blue-100',
+const TYPE_VARIANT: Record<string, 'default' | 'accent' | 'warning' | 'danger'> = {
+  '情感共鸣型': 'danger',
+  '荣耀触发型': 'warning',
+  '悬念好奇型': 'default',
+  '信息实用型': 'accent',
 }
 
-const appealDot: Record<string, string> = {
-  '高': 'bg-green-500',
-  '中': 'bg-amber-400',
-  '低': 'bg-gray-300',
+const APPEAL_COLOR: Record<string, string> = {
+  '高': '#34C759',
+  '中': '#F59E0B',
+  '低': tokens.color.text.tertiary,
 }
 
 export default function TitleCards({ titles }: Props) {
@@ -37,28 +39,35 @@ export default function TitleCards({ titles }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {titles.map((t, i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-green-200 transition-colors group">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${typeColors[t.type] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-              {t.type}
-            </span>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className={`w-2 h-2 rounded-full ${appealDot[t.appeal] || 'bg-gray-300'}`} />
-              <span className="text-xs text-gray-400">打开率预测 {t.appeal}</span>
+        <Card key={i} style={{ padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+            <Badge variant={TYPE_VARIANT[t.type] ?? 'default'} style={{ fontSize: '11px' }}>{t.type}</Badge>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: APPEAL_COLOR[t.appeal] ?? tokens.color.text.tertiary }} />
+              <span style={{ fontSize: '11px', color: tokens.color.text.tertiary }}>打开率预测 {t.appeal}</span>
             </div>
           </div>
-          <div className="text-sm font-medium text-gray-800 leading-relaxed mb-2">{t.title}</div>
-          <div className="text-xs text-gray-400 mb-3">{t.reason}</div>
+          <p style={{ fontSize: '13px', fontWeight: tokens.typography.weight.medium, color: tokens.color.text.primary, lineHeight: 1.6, marginBottom: '6px' }}>
+            {t.title}
+          </p>
+          <p style={{ fontSize: '11px', color: tokens.color.text.tertiary, marginBottom: '10px' }}>{t.reason}</p>
           <button
             onClick={() => handleCopy(t.title, i)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-600 transition-colors"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              fontSize: '12px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', padding: 0,
+              color: copied === i ? '#065F46' : tokens.color.text.tertiary,
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => { if (copied !== i) e.currentTarget.style.color = tokens.color.accent }}
+            onMouseLeave={(e) => { if (copied !== i) e.currentTarget.style.color = tokens.color.text.tertiary }}
           >
             {copied === i
-              ? <><Check size={12} className="text-green-500" /><span className="text-green-500">已复制</span></>
+              ? <><Check size={12} /><span>已复制</span></>
               : <><Copy size={12} /><span>复制标题</span></>
             }
           </button>
-        </div>
+        </Card>
       ))}
     </div>
   )

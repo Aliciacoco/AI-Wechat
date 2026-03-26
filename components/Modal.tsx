@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { tokens } from '@/lib/design-tokens'
 
 interface ModalProps {
   isOpen: boolean
@@ -11,12 +12,11 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
+const sizeMap = { sm: '480px', md: '640px', lg: '800px', xl: '960px' }
+
 export default function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalProps) {
-  // 按 ESC 键关闭弹窗
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (isOpen) {
       document.addEventListener('keydown', handleEsc)
       document.body.style.overflow = 'hidden'
@@ -29,57 +29,45 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
 
   if (!isOpen) return null
 
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 遮罩层 */}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
         onClick={onClose}
       />
-
-      {/* 弹窗内容 */}
       <div
-        className={`relative bg-white rounded-xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] flex flex-col`}
-        style={{ boxShadow: 'var(--shadow-lg)' }}
         onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          backgroundColor: tokens.color.base.white,
+          borderRadius: tokens.radius.modal,
+          border: `1px solid ${tokens.color.border}`,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
+          maxWidth: sizeMap[size],
+          width: 'calc(100% - 32px)',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: tokens.typography.fontFamily.zh,
+        }}
       >
         {/* 头部 */}
-        <div
-          className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: `1px solid ${tokens.color.divider}`, flexShrink: 0 }}>
+          <h2 style={{ fontSize: '16px', fontWeight: tokens.typography.weight.semibold, color: tokens.color.text.primary, margin: 0 }}>
             {title}
           </h2>
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onClose()
-            }}
-            className="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
-            style={{ color: 'var(--foreground-tertiary)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--background-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose() }}
+            style={{ width: '32px', height: '32px', borderRadius: tokens.radius.buttonSm, border: 'none', backgroundColor: 'transparent', color: tokens.color.text.tertiary, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background-color 0.15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = tokens.color.base.gray }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
-
         {/* 内容区 */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {children}
         </div>
       </div>

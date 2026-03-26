@@ -1,5 +1,5 @@
 // 学校信息
-export const SCHOOLS = {
+export const SCHOOLS: Record<string, { name: string; shortName: string; logo: string }> = {
   '北京大学': { name: '北京大学', shortName: '北大', logo: '/schools/北大.jpg' },
   '北京师大': { name: '北京师范大学', shortName: '北师', logo: '/schools/北京师范大学.jpg' },
   '中国科学技术大学': { name: '中国科学技术大学', shortName: '中科大', logo: '/schools/中国科学技术大学.jpg' },
@@ -12,6 +12,10 @@ export const SCHOOLS = {
   '东华大学': { name: '东华大学', shortName: '东华', logo: '/schools/东华大学.jpg' },
   '复旦': { name: '复旦大学', shortName: '复旦', logo: '/schools/复旦.jpg' },
   '上海大学': { name: '上海大学', shortName: '上大', logo: '/schools/上海大学.jpg' },
+  // 以下为 school-profiles 中的学校账号占位（暂无图片时用文字头像）
+  '东南大学': { name: '东南大学', shortName: '东大', logo: '/schools/东南大学.jpg' },
+  '南京医科大学': { name: '南京医科大学', shortName: '南医大', logo: '/schools/南京医科大学.jpg' },
+  '金陵科技学院': { name: '金陵科技学院', shortName: '金科', logo: '/schools/金陵科技学院.jpg' },
 }
 
 // 标杆案例数据

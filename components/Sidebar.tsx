@@ -3,6 +3,8 @@
 import { Home, FileText, Star } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { tokens } from '@/lib/design-tokens'
+import { Divider } from '@/components/ui'
 
 const navItems = [
   { icon: Home, label: '首页', href: '/' },
@@ -14,46 +16,48 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-60 border-r bg-white flex flex-col" style={{ borderColor: 'var(--border)' }}>
-      {/* 导航菜单 */}
-      <nav className="flex-1 px-2 py-4">
-        <div className="space-y-1">
+    <aside style={{
+      position: 'fixed', left: 0, top: '56px',
+      height: 'calc(100vh - 56px)', width: '220px',
+      borderRight: `1px solid ${tokens.color.divider}`,
+      backgroundColor: tokens.color.base.white,
+      display: 'flex', flexDirection: 'column',
+      fontFamily: tokens.typography.fontFamily.zh,
+    }}>
+      <nav style={{ flex: 1, padding: '12px 8px' }}>
+        <div className="space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-md transition-all"
                 style={{
-                  backgroundColor: isActive ? 'var(--background-hover)' : 'transparent',
-                  color: isActive ? 'var(--foreground)' : 'var(--foreground-secondary)',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '8px 12px', borderRadius: tokens.radius.buttonSm,
+                  textDecoration: 'none',
+                  backgroundColor: isActive ? '#EBF4FF' : 'transparent',
+                  color: isActive ? tokens.color.accent : tokens.color.text.secondary,
+                  transition: 'background-color 0.15s, color 0.15s',
                 }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'var(--background-hover)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }
-                }}
+                onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.backgroundColor = tokens.color.base.gray; e.currentTarget.style.color = tokens.color.text.primary } }}
+                onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = tokens.color.text.secondary } }}
               >
-                <Icon size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
+                <Icon size={16} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', fontWeight: isActive ? tokens.typography.weight.semibold : tokens.typography.weight.regular }}>
+                  {item.label}
+                </span>
               </Link>
             )
           })}
         </div>
       </nav>
 
-      {/* 底部信息 */}
-      <div className="p-4 border-t text-xs" style={{ borderColor: 'var(--border)', color: 'var(--foreground-tertiary)' }}>
-        <p>南京师范大学</p>
-        <p className="mt-1">公众号运营平台</p>
+      <Divider />
+      <div style={{ padding: '14px 16px' }}>
+        <p style={{ fontSize: '11px', color: tokens.color.text.tertiary }}>南京师范大学</p>
+        <p style={{ fontSize: '11px', color: tokens.color.text.tertiary, marginTop: '2px' }}>公众号运营平台</p>
       </div>
     </aside>
   )

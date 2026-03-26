@@ -4,6 +4,7 @@ import { useScene } from './SceneProvider'
 import InsightScene from './scenes/InsightScene'
 import TopicsScene from './scenes/TopicsScene'
 import CreationScene from './scenes/CreationScene'
+import ReviewScene from './scenes/ReviewScene'
 
 export default function SceneContent() {
   const { scene } = useScene()
@@ -19,6 +20,10 @@ export default function SceneContent() {
       <div style={{ display: scene === 'creation' ? 'block' : 'none' }}>
         <CreationScene />
       </div>
+      <div style={{ display: scene === 'review' ? 'block' : 'none' }}>
+        <ReviewScene />
+      </div>
     </>
   )
 }
+

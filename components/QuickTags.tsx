@@ -1,5 +1,7 @@
 'use client'
 
+import { tokens } from '@/lib/design-tokens'
+
 interface QuickTag {
   id: string
   label: string
@@ -13,29 +15,34 @@ interface QuickTagsProps {
 
 export default function QuickTags({ tags, onSelectTag }: QuickTagsProps) {
   return (
-    <div className="flex flex-wrap gap-2 mb-8 justify-center">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '32px', justifyContent: 'center' }}>
       {tags.map((tag) => (
         <button
           key={tag.id}
           onClick={() => onSelectTag(tag)}
-          className="px-4 py-2 rounded-full text-sm transition-all border"
           style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--background)',
-            color: 'var(--foreground-secondary)',
+            padding: '6px 16px',
+            borderRadius: tokens.radius.button,
+            border: `1px solid ${tokens.color.border}`,
+            backgroundColor: tokens.color.base.white,
+            color: tokens.color.text.secondary,
+            fontSize: '13px',
+            fontFamily: tokens.typography.fontFamily.zh,
+            cursor: 'pointer',
+            transition: 'all 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--primary)'
-            e.currentTarget.style.color = 'var(--primary)'
-            e.currentTarget.style.backgroundColor = 'var(--primary-light)'
+            e.currentTarget.style.borderColor = tokens.color.accent
+            e.currentTarget.style.color = tokens.color.accent
+            e.currentTarget.style.backgroundColor = '#EBF4FF'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)'
-            e.currentTarget.style.color = 'var(--foreground-secondary)'
-            e.currentTarget.style.backgroundColor = 'var(--background)'
+            e.currentTarget.style.borderColor = tokens.color.border
+            e.currentTarget.style.color = tokens.color.text.secondary
+            e.currentTarget.style.backgroundColor = tokens.color.base.white
           }}
         >
-          {tag.icon && <span className="mr-1">{tag.icon}</span>}
+          {tag.icon && <span style={{ marginRight: '4px' }}>{tag.icon}</span>}
           {tag.label}
         </button>
       ))}

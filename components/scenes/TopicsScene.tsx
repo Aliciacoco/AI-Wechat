@@ -19,6 +19,7 @@ import {
   buildNodeQuickPrompt,
   buildFreeSearchPrompt,
   buildHotTopicPrompt,
+  inferDefaultsFromNode,
   type NodeTable,
 } from '@/lib/prompt-builder'
 import { useScene } from '@/components/SceneProvider'
@@ -119,13 +120,18 @@ export default function TopicsScene() {
     openModal(buildHotTopicPrompt(item, currentSchool), `热点：${item.title}`)
   }
 
-  // 节点卡片「生成选题」：直接打开 AI 对话窗口
+  // 节点卡片「生成选题」：有学校时自动推断默认值走配置面板相同逻辑，无学校时降级用快速版
   const handleNodeGenerate = (node: CalendarNode) => {
     const table: NodeTable = RECRUIT_NODES.find(n => n.id === node.id) ? 'recruit'
       : FESTIVAL_NODES.find(n => n.id === node.id) ? 'festival'
       : 'campus'
-    const prompt = buildNodeQuickPrompt(node, table, currentSchool)
-    openModal(prompt, `节点：${node.title}`)
+    if (currentSchool) {
+      const { contentType, writingStyle } = inferDefaultsFromNode(table, currentSchool)
+      const prompt = buildPromptByTable(table, { school: currentSchool, node, contentType, writingStyle })
+      openModal(prompt, `节点：${node.title}`)
+    } else {
+      openModal(buildNodeQuickPrompt(node, table, null), `节点：${node.title}`)
+    }
   }
 
   return (
